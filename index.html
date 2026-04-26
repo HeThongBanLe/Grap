@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>GrapApp — Đặt Xe</title>
+<title>GrapApp</title>
 
 <script type="module">
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -21,12 +21,12 @@ const firebaseConfig = {
   appId: "1:523295120957:web:8bd84167a87ef4b12b9454",
   measurementId: "G-4VXZSQ9EB5"
 };
-
-const fbApp = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-const auth  = getAuth(fbApp);
-const db    = getFirestore(fbApp);
-window._auth = auth; window._db = db;
+const app  = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+window._app = app; window._auth = auth; window._db = db;
 window._firebase = {
+  initializeApp, getApps, getAuth,
   signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut,
   onAuthStateChanged, updatePassword,
   collection, doc, setDoc, getDoc, getDocs, addDoc, updateDoc, deleteDoc,
@@ -36,29 +36,25 @@ window.dispatchEvent(new Event('firebase-ready'));
 </script>
 
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-
 <style>
-:root {
-  --accent:#c9a84c; --accent2:#e8c96a;
-  --bg:#0f0d0b; --surface:#1a1714; --surface2:#231f1b; --surface3:#2e2924;
-  --border:#3a332c; --cream:#f5ead8; --text:#f0e6d3; --text2:#b0a090; --text3:#6b5f52;
-  --red:#e05a4e; --green:#5aab7a; --blue:#5a8fc9; --orange:#e8894e;
-  --r:12px; --sh:0 4px 24px rgba(0,0,0,.4);
+:root{
+  --accent:#c9a84c;--accent2:#e8c96a;
+  --bg:#0f0d0b;--surface:#1a1714;--surface2:#231f1b;--surface3:#2e2924;
+  --border:#3a332c;--cream:#f5ead8;--text:#f0e6d3;--text2:#b0a090;--text3:#6b5f52;
+  --red:#e05a4e;--green:#5aab7a;--blue:#5a8fc9;--orange:#e8894e;
+  --r:12px;--sh:0 4px 24px rgba(0,0,0,.4);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
 h1,h2,h3{font-family:'Playfair Display',serif}
-::-webkit-scrollbar{width:5px;height:5px}
-::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
 
-/* TOAST */
 #toast-wrap{position:fixed;bottom:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:6px;pointer-events:none}
-.toast{background:var(--surface2);border:1px solid var(--border);border-left:4px solid var(--accent);padding:10px 14px;border-radius:8px;font-size:13px;max-width:300px;animation:tslide .3s ease}
+.toast{background:var(--surface2);border:1px solid var(--border);border-left:4px solid var(--accent);padding:10px 14px;border-radius:8px;font-size:13px;max-width:300px;animation:tslide .3s}
 .toast.err{border-left-color:var(--red)}.toast.ok{border-left-color:var(--green)}.toast.info{border-left-color:var(--blue)}
 @keyframes tslide{from{transform:translateX(110%);opacity:0}to{transform:translateX(0);opacity:1}}
 
-/* BUTTONS */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 16px;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 16px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap;font-family:inherit}
 .btn:active{transform:scale(.97)}
 .btn-full{width:100%}
 .btn-gold{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#1a1000}
@@ -73,7 +69,6 @@ h1,h2,h3{font-family:'Playfair Display',serif}
 .btn-sm{padding:6px 12px;font-size:12px}
 .btn-xs{padding:4px 8px;font-size:11px;border-radius:5px}
 
-/* INPUTS */
 .field{margin-bottom:14px}
 .field label{display:block;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px}
 .inp{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:14px;outline:none;transition:border .2s;font-family:inherit}
@@ -81,28 +76,22 @@ h1,h2,h3{font-family:'Playfair Display',serif}
 select.inp option{background:var(--surface2)}
 .input-row{display:flex;gap:8px}
 .input-row .field{flex:1}
-
-/* LOGIN */
-#login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 30% 50%,#1a1208,#0f0d0b)}
-.login-box{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:40px 36px;width:390px;box-shadow:var(--sh)}
-.login-logo{text-align:center;margin-bottom:28px}
-.login-logo h1{font-size:32px;color:var(--accent)}
-.login-logo p{font-size:11px;color:var(--text3);letter-spacing:4px;text-transform:uppercase;margin-top:4px}
-.login-tabs{display:flex;gap:4px;margin-bottom:20px;background:var(--surface2);border-radius:10px;padding:4px}
-.login-tab{flex:1;padding:8px;text-align:center;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text3);transition:all .2s}
-.login-tab.active{background:var(--surface3);color:var(--accent)}
 .login-suffix{position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:12px;pointer-events:none}
 
-/* APP */
-#app-admin{display:none;min-height:100vh}
-#app-driver{display:none;min-height:100vh}
-#app-customer{display:none;min-height:100vh}
+#login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 30% 50%,#2a1f0e,#0f0d0b)}
+.login-box{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:40px 36px;width:360px;box-shadow:var(--sh)}
+.login-logo{text-align:center;margin-bottom:28px}
+.login-logo h1{font-size:30px;color:var(--accent)}
+.login-logo p{font-size:11px;color:var(--text3);letter-spacing:4px;text-transform:uppercase;margin-top:4px}
+.login-or{text-align:center;color:var(--text3);font-size:12px;margin:14px 0;position:relative}
+.login-or::before,.login-or::after{content:'';position:absolute;top:50%;width:42%;height:1px;background:var(--border)}
+.login-or::before{left:0}.login-or::after{right:0}
 
-/* SIDEBAR — admin */
+#app{display:none;min-height:100vh}
 .sidebar{position:fixed;left:0;top:0;bottom:0;width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:100;transition:transform .3s}
 .sidebar-logo{padding:20px 18px 16px;border-bottom:1px solid var(--border)}
 .sidebar-logo h2{font-size:20px;color:var(--accent)}
-.sidebar-logo p{font-size:11px;color:var(--text3);margin-top:2px}
+.sidebar-logo p{font-size:11px;color:var(--text3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .nav-item{display:flex;align-items:center;gap:10px;padding:12px 18px;cursor:pointer;color:var(--text2);transition:all .2s;border-left:3px solid transparent;font-size:13px;font-weight:500}
 .nav-item:hover{background:var(--surface2);color:var(--text)}
 .nav-item.active{background:var(--surface2);color:var(--accent);border-left-color:var(--accent)}
@@ -114,27 +103,29 @@ select.inp option{background:var(--surface2)}
 .user-role{font-size:10px;color:var(--text3)}
 .logout-btn{background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px;padding:4px}
 .logout-btn:hover{color:var(--red)}
-.main{margin-left:220px;padding:22px;min-height:100vh}
+.main{margin-left:220px;padding:22px;min-height:100vh;transition:margin .3s}
 .hamburger{display:none;position:fixed;top:10px;left:10px;z-index:300;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 10px;cursor:pointer;font-size:20px}
 .backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99}
 
-/* TOP NAV — driver/customer */
-.top-nav{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100}
-.top-nav-logo{font-size:20px;color:var(--accent);font-family:'Playfair Display',serif;flex:1}
-.top-tab{padding:6px 14px;border-radius:7px;cursor:pointer;font-size:12px;font-weight:500;color:var(--text2);border:1px solid transparent;transition:all .2s}
-.top-tab.active{background:var(--surface2);color:var(--accent);border-color:var(--border)}
-.sub-main{padding:20px;max-width:700px;margin:0 auto}
+#guest-screen{min-height:100vh;display:none}
+.guest-header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 20px;display:flex;align-items:center;gap:12px}
+.guest-header h2{font-size:20px;color:var(--accent);flex:1}
+.guest-body{padding:20px;max-width:640px;margin:0 auto}
 
-/* PAGE HEADER */
+.trip-panel{position:fixed;right:0;top:0;bottom:0;width:340px;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;z-index:200;transform:translateX(100%);transition:transform .3s}
+.trip-panel.open{transform:translateX(0)}
+.tp-head{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.tp-title{font-size:17px;font-weight:700;flex:1}
+.tp-body{flex:1;overflow-y:auto;padding:14px}
+.tp-foot{padding:14px;border-top:1px solid var(--border)}
+
 .ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px}
 .ph-title{font-size:24px;color:var(--cream)}
 .ph-sub{font-size:12px;color:var(--text3);margin-top:2px}
 
-/* CARD */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:14px}
 .card-title{font-size:15px;font-weight:600;color:var(--cream);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:8px}
 
-/* TABLE */
 .tbl-wrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse}
 th{text-align:left;padding:8px 12px;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);border-bottom:1px solid var(--border)}
@@ -142,7 +133,6 @@ td{padding:9px 12px;border-bottom:1px solid var(--border);font-size:13px;color:v
 tr:last-child td{border-bottom:none}
 tbody tr:hover td{background:rgba(255,255,255,.02)}
 
-/* TAGS */
 .tag{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600}
 .tag-gold{background:#2a2010;color:var(--accent);border:1px solid #4a3a18}
 .tag-green{background:#0f2a1a;color:var(--green);border:1px solid #1a4a2a}
@@ -151,46 +141,44 @@ tbody tr:hover td{background:rgba(255,255,255,.02)}
 .tag-orange{background:#2a1a0e;color:var(--orange);border:1px solid #4a2a1a}
 .tag-gray{background:var(--surface2);color:var(--text3);border:1px solid var(--border)}
 
-/* MODAL */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:500;display:flex;align-items:center;justify-content:center;padding:14px;backdrop-filter:blur(4px)}
-.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;box-shadow:var(--sh)}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;box-shadow:var(--sh)}
 .modal-title{font-size:18px;color:var(--cream);margin-bottom:18px;display:flex;align-items:center;justify-content:space-between}
 .modal-close{background:none;border:none;color:var(--text3);cursor:pointer;font-size:20px}
 .modal-close:hover{color:var(--red)}
 .modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
 
-/* TABS */
 .tabs{display:flex;gap:4px;margin-bottom:16px;flex-wrap:wrap}
 .tab{padding:7px 16px;border-radius:7px;cursor:pointer;font-size:12px;font-weight:500;color:var(--text2);border:1px solid var(--border);transition:all .2s}
 .tab.active{background:var(--accent);color:#1a1000;border-color:var(--accent)}
 .tab:hover:not(.active){border-color:var(--accent);color:var(--accent)}
 
-/* STATS */
 .stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:20px}
 .stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px}
 .stat-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px}
 .stat-val{font-size:26px;font-weight:700;color:var(--cream);margin-top:4px}
 .stat-sub{font-size:11px;color:var(--text3);margin-top:3px}
 
-/* TRIP CARD */
-.trip-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px}
-.trip-card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px}
-.trip-route .from{color:var(--green)}
-.trip-route .to{color:var(--red)}
-.trip-route div{margin:3px 0;font-size:13px}
-.trip-meta{font-size:11px;color:var(--text3);margin-top:7px}
+.trip-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.t-card{background:var(--surface2);border:2px solid var(--border);border-radius:10px;padding:14px;cursor:pointer;transition:all .2s}
+.t-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.t-card.pending{border-color:var(--orange)}
+.t-card.accepted{border-color:var(--blue)}
+.t-card.onride{border-color:var(--green)}
+.t-card.selected{box-shadow:0 0 0 3px rgba(201,168,76,.35);border-color:var(--accent2)}
 
-/* ONLINE TOGGLE */
-.online-toggle{display:flex;align-items:center;gap:12px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:16px}
-.toggle-dot{width:10px;height:10px;border-radius:50%;background:var(--text3);transition:all .3s;flex-shrink:0}
-.toggle-dot.on{background:var(--green);box-shadow:0 0 8px rgba(90,171,122,.5)}
+.hist-item{background:var(--surface2);border-radius:9px;margin-bottom:10px;overflow:hidden}
+.hist-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;cursor:pointer}
+.hist-head:hover{background:rgba(255,255,255,.03)}
+.hist-body{padding:0;border-top:1px solid var(--border);display:none}
+.hist-body.open{display:block;padding:10px 14px 12px}
 
-/* MISC */
+.filter-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px}
+
 .spinner{width:30px;height:30px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin:40px auto}
 @keyframes spin{to{transform:rotate(360deg)}}
 .empty{text-align:center;color:var(--text3);padding:32px;font-size:13px}
 .divider{height:1px;background:var(--border);margin:12px 0}
-.badge{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--red);color:#fff;font-size:10px;font-weight:700;margin-left:4px}
 
 @media(max-width:768px){
   .sidebar{transform:translateX(-100%)}
@@ -198,1145 +186,1259 @@ tbody tr:hover td{background:rgba(255,255,255,.02)}
   .backdrop.show{display:block}
   .hamburger{display:flex;align-items:center}
   .main{margin-left:0;padding:14px;padding-top:52px}
+  .trip-panel{width:100%}
   .stats-grid{grid-template-columns:1fr 1fr}
   .input-row{flex-direction:column}
   .ph-title{font-size:19px}
-  .login-box{width:100%;max-width:390px}
-  .top-nav{flex-wrap:wrap;gap:6px}
 }
 </style>
 </head>
 <body>
+
 <div id="toast-wrap"></div>
 
-<!-- ═══════════════════════════════
-          MÀN HÌNH ĐĂNG NHẬP
-════════════════════════════════ -->
+<!-- LOGIN -->
 <div id="login-screen">
   <div class="login-box">
-    <div class="login-logo">
-      <h1>🚗 GrapApp</h1>
-      <p>Nền tảng đặt xe</p>
-    </div>
-
-    <div class="login-tabs">
-      <div class="login-tab active" onclick="switchLoginTab('staff')">Tài xế / Admin</div>
-      <div class="login-tab" onclick="switchLoginTab('customer')">Khách hàng</div>
-    </div>
-
-    <!-- Tab: Tài xế / Admin -->
-    <div id="ltab-staff">
-      <div class="field">
-        <label>Tài khoản</label>
-        <div style="position:relative">
-          <input class="inp" id="lu" placeholder="username hoặc email" oninput="updateLoginSuffix()" onkeydown="if(event.key==='Enter')doLogin()">
-          <span id="lu-suffix" class="login-suffix"></span>
-        </div>
-      </div>
-      <div class="field">
-        <label>Mật khẩu</label>
-        <input class="inp" id="lp" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
-      </div>
-      <button class="btn btn-gold btn-full" onclick="doLogin()">Đăng nhập</button>
-    </div>
-
-    <!-- Tab: Khách hàng -->
-    <div id="ltab-customer" style="display:none">
-      <div class="tabs">
-        <div class="tab active" id="cl-tab-login" onclick="switchCustomerLoginTab('login')">Đăng nhập</div>
-        <div class="tab" id="cl-tab-reg" onclick="switchCustomerLoginTab('reg')">Đăng ký</div>
-      </div>
-
-      <div id="cl-form-login">
-        <div class="field"><label>Email</label><input class="inp" id="ce-login" type="email" placeholder="email@gmail.com" onkeydown="if(event.key==='Enter')doCustomerLogin()"></div>
-        <div class="field"><label>Mật khẩu</label><input class="inp" id="cp-login" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doCustomerLogin()"></div>
-        <button class="btn btn-gold btn-full" onclick="doCustomerLogin()">Đăng nhập</button>
-      </div>
-
-      <div id="cl-form-reg" style="display:none">
-        <div class="field"><label>Họ tên</label><input class="inp" id="cr-name" placeholder="Nguyễn Văn A"></div>
-        <div class="field"><label>Số điện thoại</label><input class="inp" id="cr-phone" placeholder="0912345678"></div>
-        <div class="field"><label>Email</label><input class="inp" id="cr-email" type="email" placeholder="email@gmail.com"></div>
-        <div class="field"><label>Mật khẩu</label><input class="inp" id="cr-pass" type="password" placeholder="Tối thiểu 6 ký tự"></div>
-        <button class="btn btn-gold btn-full" onclick="doRegister()">Tạo tài khoản</button>
+    <div class="login-logo"><h1>🚗 GrapApp</h1><p>QUẢN LÝ ĐẶT XE</p></div>
+    <div class="field">
+      <label>Tên đăng nhập</label>
+      <div style="position:relative">
+        <input class="inp" id="lu" placeholder="admin hoặc tên nhân viên" oninput="updateLoginSuffix()" onkeydown="if(event.key==='Enter')doLogin()">
+        <span class="login-suffix" id="lu-suffix"></span>
       </div>
     </div>
+    <div class="field"><label>Mật khẩu</label>
+      <input class="inp" type="password" id="lp" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="btn btn-gold btn-full" onclick="doLogin()">Đăng nhập</button>
+    <div class="login-or">hoặc</div>
+    <button class="btn btn-outline btn-full" onclick="showGuest()">👤 Đặt xe (Khách)</button>
   </div>
 </div>
 
-<!-- ═══════════════════════════════
-          APP ADMIN
-════════════════════════════════ -->
-<div id="app-admin">
+<!-- KHÁCH -->
+<div id="guest-screen">
+  <div class="guest-header">
+    <h2>🚗 GrapApp</h2>
+    <button class="btn btn-outline btn-sm" onclick="showLogin()">🔑 Nhân viên đăng nhập</button>
+  </div>
+  <div class="guest-body" id="guest-body"><div class="spinner"></div></div>
+</div>
+
+<!-- APP -->
+<div id="app">
   <button class="hamburger" onclick="toggleSidebar()">☰</button>
   <div class="backdrop" id="backdrop" onclick="toggleSidebar()"></div>
-
-  <nav class="sidebar" id="sidebar">
+  <div class="sidebar" id="sidebar">
     <div class="sidebar-logo">
       <h2>🚗 GrapApp</h2>
-      <p>Quản trị hệ thống</p>
+      <p id="sb-sub">Quản lý đặt xe</p>
     </div>
-    <div class="nav-item active" id="nav-dashboard" onclick="adminPage('dashboard')"><span class="nav-icon">📊</span>Dashboard</div>
-    <div class="nav-item" id="nav-drivers"   onclick="adminPage('drivers')">  <span class="nav-icon">🚘</span>Tài xế</div>
-    <div class="nav-item" id="nav-customers" onclick="adminPage('customers')"><span class="nav-icon">👥</span>Khách hàng</div>
-    <div class="nav-item" id="nav-trips"     onclick="adminPage('trips')">    <span class="nav-icon">🗺️</span>Chuyến xe</div>
-    <div class="nav-item" id="nav-accounts"  onclick="adminPage('accounts')"> <span class="nav-icon">🔑</span>Tài khoản</div>
-    <div class="nav-item" id="nav-settings"  onclick="adminPage('settings')"> <span class="nav-icon">⚙️</span>Cài đặt</div>
+    <nav id="nav"></nav>
     <div class="sidebar-bottom">
-      <div class="avatar">A</div>
+      <div class="avatar" id="sb-avatar">?</div>
       <div class="user-info">
-        <div class="user-name">Admin</div>
-        <div class="user-role">Quản trị viên</div>
+        <div class="user-name" id="sb-uname"></div>
+        <div class="user-role" id="sb-urole"></div>
       </div>
-      <button class="logout-btn" onclick="doLogout()">⏻</button>
+      <button class="logout-btn" onclick="doLogout()" title="Đăng xuất">⏻</button>
     </div>
-  </nav>
-
-  <main class="main" id="admin-main"><div class="spinner"></div></main>
-</div>
-
-<!-- ═══════════════════════════════
-          APP TÀI XẾ
-════════════════════════════════ -->
-<div id="app-driver">
-  <div class="top-nav">
-    <div class="top-nav-logo">🚗 GrapApp</div>
-    <div style="display:flex;gap:4px">
-      <div class="top-tab active" id="dtab-home"    onclick="driverPage('home')">Chuyến xe</div>
-      <div class="top-tab"        id="dtab-history" onclick="driverPage('history')">Lịch sử</div>
-      <div class="top-tab"        id="dtab-profile" onclick="driverPage('profile')">Hồ sơ</div>
-    </div>
-    <button class="btn btn-ghost btn-sm" onclick="doLogout()" style="margin-left:auto">Đăng xuất</button>
   </div>
-  <div class="sub-main" id="driver-main"><div class="spinner"></div></div>
+  <div class="main" id="main"></div>
 </div>
 
-<!-- ═══════════════════════════════
-          APP KHÁCH HÀNG
-════════════════════════════════ -->
-<div id="app-customer">
-  <div class="top-nav">
-    <div class="top-nav-logo">🚗 GrapApp</div>
-    <div style="display:flex;gap:4px">
-      <div class="top-tab active" id="ctab-book"    onclick="customerPage('book')">Đặt xe</div>
-      <div class="top-tab"        id="ctab-trips"   onclick="customerPage('trips')">Chuyến của tôi</div>
-      <div class="top-tab"        id="ctab-profile" onclick="customerPage('profile')">Hồ sơ</div>
+<!-- TRIP DETAIL PANEL -->
+<div class="trip-panel" id="trip-panel">
+  <div class="tp-head">
+    <div>
+      <div class="tp-title" id="tp-title">Chi tiết</div>
+      <div style="font-size:11px;color:var(--text3)" id="tp-meta"></div>
     </div>
-    <button class="btn btn-ghost btn-sm" onclick="doLogout()" style="margin-left:auto">Đăng xuất</button>
+    <button class="btn btn-outline btn-sm" onclick="closeTP()">✕</button>
   </div>
-  <div class="sub-main" id="customer-main"><div class="spinner"></div></div>
+  <div class="tp-body" id="tp-body"></div>
+  <div class="tp-foot" id="tp-foot"></div>
 </div>
+
+<div id="modal-wrap"></div>
 
 <script>
-// ════════════════════════════════════════
-//   CONSTANTS & STATE
-// ════════════════════════════════════════
-const ADMIN_EMAIL   = 'Admin@myapp.com';
-const DRIVER_DOMAIN = '@myapp.com';
-const API_KEY       = 'AIzaSyBVJu34eNs5_h5o33tUdPqyuxOx-SU-NGc';
+const ADMIN_EMAIL = 'Admin@myapp.com';
+const DOMAIN      = '@myapp.com';
 
-let currentUser    = null;
-let currentRole    = null;   // 'admin' | 'driver' | 'customer'
-let currentProfile = null;
-let driverOnline   = false;
-let appConfig      = { name:'GrapApp', fareBase:10000, farePerKm:8000 };
+let currentUser = null, isAdmin = false;
+let currentUserFullName = '';
+let appConfig = {}, staffList = [], vehicleList = [], activeTrips = {};
+let currentTripId = null, currentPage = '', bookingFilter = 'all';
+let unsubTrips = null, unsubDisabled = null;
 
-let unsubDisabled  = null;
-let unsubPending   = null;
-let unsubActive    = null;
-let unsubCurrent   = null;
-
-// ════════════════════════════════════════
-//   UTILS
-// ════════════════════════════════════════
-function $(id){ return document.getElementById(id); }
-
-function toast(msg, type='info'){
-  const w = $('toast-wrap');
-  const d = document.createElement('div');
-  d.className = `toast ${type}`;
-  d.textContent = msg;
-  w.appendChild(d);
-  setTimeout(()=>d.remove(), 3500);
-}
-
-function fmtMoney(n){
-  if(!n && n!==0) return '—';
-  return Number(n).toLocaleString('vi-VN') + 'đ';
-}
-
-function fmtDate(ts){
-  if(!ts) return '—';
-  const d = ts?.toDate ? ts.toDate() : (ts instanceof Date ? ts : new Date(ts));
-  return d.toLocaleDateString('vi-VN') + ' ' + d.toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'});
-}
-
-function statusTag(s){
-  const map = {
-    pending:   '<span class="tag tag-orange">⏳ Chờ tài xế</span>',
-    accepted:  '<span class="tag tag-blue">✅ Đã nhận</span>',
-    onride:    '<span class="tag tag-gold">🚗 Đang chạy</span>',
-    completed: '<span class="tag tag-green">✔ Hoàn thành</span>',
-    cancelled: '<span class="tag tag-red">✕ Đã huỷ</span>',
-  };
-  return map[s] || `<span class="tag tag-gray">${s}</span>`;
-}
-
-function closeModal(id){ const el=$(id); if(el) el.remove(); }
-
-function cleanupListeners(){
-  [unsubDisabled, unsubPending, unsubActive, unsubCurrent].forEach(u=>{ if(u) u(); });
-  unsubDisabled = unsubPending = unsubActive = unsubCurrent = null;
-}
-
-// ════════════════════════════════════════
-//   LOGIN UI
-// ════════════════════════════════════════
-function switchLoginTab(tab){
-  $('ltab-staff').style.display    = tab==='staff'    ? 'block' : 'none';
-  $('ltab-customer').style.display = tab==='customer' ? 'block' : 'none';
-  document.querySelectorAll('.login-tab').forEach((el,i)=>{
-    el.classList.toggle('active', (i===0&&tab==='staff')||(i===1&&tab==='customer'));
-  });
-}
-
-function switchCustomerLoginTab(tab){
-  $('cl-form-login').style.display = tab==='login' ? 'block' : 'none';
-  $('cl-form-reg').style.display   = tab==='reg'   ? 'block' : 'none';
-  $('cl-tab-login').className = 'tab'+(tab==='login'?' active':'');
-  $('cl-tab-reg').className   = 'tab'+(tab==='reg'  ?' active':'');
-}
-
-function updateLoginSuffix(){
-  const v = $('lu').value.trim();
-  $('lu-suffix').textContent = (!v||v.includes('@')) ? '' : DRIVER_DOMAIN;
-}
-
-// ════════════════════════════════════════
-//   AUTH
-// ════════════════════════════════════════
-async function doLogin(){
-  let u = $('lu').value.trim().toLowerCase();
-  const p = $('lp').value;
-  if(!u||!p) return toast('Nhập đầy đủ thông tin','err');
-  if(!u.includes('@')) u += DRIVER_DOMAIN;
-  try{
-    await window._firebase.signInWithEmailAndPassword(window._auth, u, p);
-  } catch(e){ toast('Sai tài khoản hoặc mật khẩu','err'); }
-}
-
-async function doCustomerLogin(){
-  const u = $('ce-login').value.trim();
-  const p = $('cp-login').value;
-  if(!u||!p) return toast('Nhập đầy đủ thông tin','err');
-  try{
-    await window._firebase.signInWithEmailAndPassword(window._auth, u, p);
-  } catch(e){ toast('Sai email hoặc mật khẩu','err'); }
-}
-
-async function doRegister(){
-  const name  = $('cr-name').value.trim();
-  const phone = $('cr-phone').value.trim();
-  const email = $('cr-email').value.trim();
-  const pass  = $('cr-pass').value;
-  if(!name||!email||!pass) return toast('Vui lòng điền đầy đủ','err');
-  if(pass.length < 6)      return toast('Mật khẩu tối thiểu 6 ký tự','err');
-  try{
-    const { createUserWithEmailAndPassword, doc, setDoc, serverTimestamp } = window._firebase;
-    const cred = await createUserWithEmailAndPassword(window._auth, email, pass);
-    await setDoc(doc(window._db,'customers',cred.user.uid),{
-      email: email.toLowerCase(), fullName: name, phone: phone||'',
-      active: true, createdAt: serverTimestamp()
-    });
-    toast('🎉 Đăng ký thành công! Chào mừng '+name,'ok');
-  } catch(e){
-    if(e.code==='auth/email-already-in-use') toast('Email đã được sử dụng','err');
-    else toast('Lỗi: '+e.message,'err');
-  }
-}
-
-async function doLogout(){
-  // Set driver offline trước khi logout
-  if(currentRole==='driver' && currentProfile?.id){
-    try{ await window._firebase.updateDoc(window._firebase.doc(window._db,'drivers',currentProfile.id),{online:false}); }catch(e){}
-  }
-  cleanupListeners();
-  await window._firebase.signOut(window._auth);
-  $('lp').value=''; $('lu').value=''; $('lu-suffix').textContent='';
-}
-
-function hideAll(){
-  ['login-screen','app-admin','app-driver','app-customer'].forEach(id=>{
-    const el=$(id); if(el) el.style.display='none';
-  });
-}
-function showLogin(){
-  hideAll();
-  $('login-screen').style.display='flex';
-}
-
-// ════════════════════════════════════════
-//   FIREBASE READY
-// ════════════════════════════════════════
-window.addEventListener('firebase-ready', ()=>{
-  loadAppConfig();
+// ═════ FIREBASE READY ═════
+window.addEventListener('firebase-ready', () => {
+  loadAppConfigPublic();
   window._firebase.onAuthStateChanged(window._auth, async u => {
-    if(u){
+    if (u) {
       currentUser = u;
-      if(u.email === ADMIN_EMAIL){
-        currentRole = 'admin';
-        showAdminApp();
-      } else {
-        // Kiểm tra tài xế
-        const dSnap = await window._firebase.getDoc(window._firebase.doc(window._db,'drivers',u.uid));
-        if(dSnap.exists()){
-          const data = dSnap.data();
-          if(data.active===false){
-            toast('🚫 Tài khoản bị vô hiệu hoá!','err');
-            await window._firebase.signOut(window._auth); return;
-          }
-          currentRole    = 'driver';
-          currentProfile = { id: u.uid, ...data };
-          driverOnline   = data.online || false;
-          startDisabledWatcher('drivers', u.uid);
-          showDriverApp();
-        } else {
-          // Kiểm tra hoặc tạo khách hàng
-          const cRef  = window._firebase.doc(window._db,'customers',u.uid);
-          let cSnap   = await window._firebase.getDoc(cRef);
-          if(!cSnap.exists()){
-            await window._firebase.setDoc(cRef,{
-              email: u.email, fullName: u.email.split('@')[0], phone:'',
-              active: true, createdAt: window._firebase.serverTimestamp()
-            });
-            cSnap = await window._firebase.getDoc(cRef);
-          }
-          const data = cSnap.data();
-          if(data.active===false){
-            toast('🚫 Tài khoản bị vô hiệu hoá!','err');
-            await window._firebase.signOut(window._auth); return;
-          }
-          currentRole    = 'customer';
-          currentProfile = { id: u.uid, ...data };
-          startDisabledWatcher('customers', u.uid);
-          showCustomerApp();
+      isAdmin = (u.email === ADMIN_EMAIL);
+      if (!isAdmin) {
+        const r = await checkStaffActive(u.email);
+        if (!r.allowed) {
+          toast('🚫 Tài khoản bị vô hiệu hoá!', 'err');
+          await window._firebase.signOut(window._auth); return;
         }
-      }
+        currentUserFullName = r.fullName || u.email.split('@')[0];
+        startDisabledWatcher(u.email);
+      } else currentUserFullName = 'Admin';
+      await loadAllData();
+      showApp();
     } else {
-      currentUser=null; currentRole=null; currentProfile=null;
-      cleanupListeners();
-      showLogin();
+      currentUser = null; isAdmin = false;
+      stopDisabledWatcher(); stopTripListener();
+      hideAll(); showLogin();
     }
   });
 });
 
-async function loadAppConfig(){
-  try{
-    const snap = await window._firebase.getDoc(window._firebase.doc(window._db,'config','app'));
-    if(snap.exists()) appConfig = { ...appConfig, ...snap.data() };
-  } catch(e){}
+async function checkStaffActive(email) {
+  const e = (email||'').toLowerCase().trim();
+  try {
+    const { collection, query, where, getDocs } = window._firebase;
+    const snap = await getDocs(query(collection(window._db,'staff'), where('email','==',e)));
+    if (snap.empty) return { allowed: true, fullName: e.split('@')[0] };
+    const d = snap.docs[0].data();
+    if (d.active === false) return { allowed: false, fullName: d.fullName||'' };
+    return { allowed: true, fullName: d.fullName || e.split('@')[0] };
+  } catch { return { allowed: true, fullName: e.split('@')[0] }; }
 }
 
-// Realtime watcher — khoá tài khoản → kick ngay
-function startDisabledWatcher(coll, uid){
-  if(unsubDisabled){ unsubDisabled(); unsubDisabled=null; }
-  const ref = window._firebase.doc(window._db, coll, uid);
-  unsubDisabled = window._firebase.onSnapshot(ref, snap=>{
-    if(snap.exists() && snap.data().active===false){
-      toast('🚫 Tài khoản của bạn vừa bị vô hiệu hoá!','err');
-      setTimeout(()=>window._firebase.signOut(window._auth), 1200);
+function startDisabledWatcher(email) {
+  stopDisabledWatcher();
+  const e = (email||'').toLowerCase().trim();
+  const ref = window._firebase.doc(window._db,'config','disabled');
+  unsubDisabled = window._firebase.onSnapshot(ref, snap => {
+    if (!currentUser || isAdmin) return;
+    const emails = (snap.data()?.emails || []).map(x=>(x||'').toLowerCase().trim());
+    if (emails.includes(e)) {
+      toast('🚫 Tài khoản của bạn vừa bị vô hiệu hoá!', 'err');
+      stopDisabledWatcher();
+      setTimeout(async () => { try { await window._firebase.signOut(window._auth); } catch(e){} }, 1200);
     }
   });
 }
+function stopDisabledWatcher() { if (unsubDisabled) { unsubDisabled(); unsubDisabled = null; } }
+function stopTripListener()    { if (unsubTrips)    { unsubTrips();    unsubTrips    = null; } }
 
-// ════════════════════════════════════════
-//   SIDEBAR — ADMIN
-// ════════════════════════════════════════
-function toggleSidebar(){
-  $('sidebar').classList.toggle('open');
-  $('backdrop').classList.toggle('show');
+async function loadAppConfigPublic() {
+  try {
+    const snap = await window._firebase.getDoc(window._firebase.doc(window._db,'config','app'));
+    if (snap.exists()) appConfig = { ...appConfig, ...snap.data() };
+  } catch {}
 }
 
-// ════════════════════════════════════════
-//   ADMIN APP
-// ════════════════════════════════════════
-function showAdminApp(){
+async function loadAllData() {
+  await loadAppConfigPublic();
+  const { collection, getDocs } = window._firebase;
+  const [s, v] = await Promise.all([
+    getDocs(collection(window._db,'staff')),
+    getDocs(collection(window._db,'vehicles'))
+  ]);
+  staffList   = s.docs.map(d=>({id:d.id,...d.data()}));
+  vehicleList = v.docs.map(d=>({id:d.id,...d.data()}));
+  subscribeTrips();
+}
+
+function subscribeTrips() {
+  stopTripListener();
+  const { collection, query, where, onSnapshot } = window._firebase;
+  const q = query(collection(window._db,'trips'), where('status','in',['pending','accepted','onride']));
+  unsubTrips = onSnapshot(q, snap => {
+    snap.docChanges().forEach(ch => {
+      if (ch.type === 'removed') delete activeTrips[ch.doc.id];
+      else activeTrips[ch.doc.id] = { id: ch.doc.id, ...ch.doc.data() };
+    });
+    refreshTripGrid();
+    if (currentTripId && document.getElementById('trip-panel').classList.contains('open')) renderTP(currentTripId);
+    if (currentPage === 'dashboard') refreshDashTrips();
+  });
+}
+
+// ═════ AUTH ═════
+function updateLoginSuffix() {
+  const v = document.getElementById('lu').value.trim();
+  document.getElementById('lu-suffix').textContent = (!v || v.includes('@')) ? '' : DOMAIN;
+}
+async function doLogin() {
+  let u = document.getElementById('lu').value.trim().toLowerCase();
+  const p = document.getElementById('lp').value;
+  if (!u || !p) return toast('Nhập đầy đủ thông tin', 'err');
+  if (!u.includes('@')) u += DOMAIN;
+  try { await window._firebase.signInWithEmailAndPassword(window._auth, u, p); }
+  catch { toast('Sai tài khoản hoặc mật khẩu', 'err'); }
+}
+async function doLogout() {
+  stopTripListener(); stopDisabledWatcher();
+  await window._firebase.signOut(window._auth);
+  document.getElementById('lp').value=''; document.getElementById('lu').value='';
+  document.getElementById('lu-suffix').textContent='';
+}
+function hideAll() { ['login-screen','guest-screen','app'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';}); }
+function showLogin() { hideAll(); document.getElementById('login-screen').style.display='flex'; }
+function showGuest() { hideAll(); document.getElementById('guest-screen').style.display='block'; renderGuestPage(); }
+
+// ═════ APP UI ═════
+const ADMIN_NAV = [
+  { id:'dashboard', icon:'📊', label:'Tổng quan' },
+  { id:'staff',     icon:'👥', label:'Nhân viên' },
+  { id:'vehicles',  icon:'🚘', label:'Quản lý xe' },
+  { id:'booking',   icon:'🗺️', label:'Đặt xe' },
+  { id:'history',   icon:'📋', label:'Lịch sử' },
+  { id:'settings',  icon:'⚙️', label:'Cài đặt' },
+];
+const STAFF_NAV = [
+  { id:'booking', icon:'🗺️', label:'Chuyến xe' },
+  { id:'history', icon:'📋', label:'Lịch sử' },
+];
+
+function showApp() {
   hideAll();
-  $('app-admin').style.display='block';
-  adminPage('dashboard');
+  document.getElementById('app').style.display = 'block';
+  buildNav(); updateSidebar();
+  navigateTo(isAdmin ? 'dashboard' : 'booking');
+}
+function buildNav() {
+  const pages = isAdmin ? ADMIN_NAV : STAFF_NAV;
+  document.getElementById('nav').innerHTML = pages.map(p =>
+    `<div class="nav-item" id="nav-${p.id}" onclick="navigateTo('${p.id}')">
+       <span class="nav-icon">${p.icon}</span>${p.label}
+     </div>`).join('');
+}
+function updateSidebar() {
+  const name = currentUserFullName || (currentUser?.email||'').split('@')[0];
+  document.getElementById('sb-avatar').textContent = name[0].toUpperCase();
+  document.getElementById('sb-uname').textContent  = name;
+  document.getElementById('sb-urole').textContent  = isAdmin ? '👑 Admin' : '🚗 Nhân viên';
+}
+function navigateTo(page) {
+  currentPage = page;
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  const nav = document.getElementById('nav-'+page);
+  if (nav) nav.classList.add('active');
+  closeSidebar(); closeTP();
+  document.getElementById('main').innerHTML = '<div class="spinner"></div>';
+  setTimeout(() => {
+    if (page==='dashboard')      renderDashboard();
+    else if (page==='staff')     renderStaff();
+    else if (page==='vehicles')  renderVehicles();
+    else if (page==='booking')   renderBooking();
+    else if (page==='history')   renderHistory();
+    else if (page==='settings')  renderSettings();
+  }, 60);
+}
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('backdrop').classList.toggle('show');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('backdrop').classList.remove('show');
 }
 
-function adminPage(page){
-  document.querySelectorAll('#app-admin .nav-item').forEach(el=>el.classList.remove('active'));
-  const nav=$('nav-'+page); if(nav) nav.classList.add('active');
-  if(window.innerWidth<=768){ $('sidebar').classList.remove('open'); $('backdrop').classList.remove('show'); }
-  switch(page){
-    case 'dashboard': renderDashboard(); break;
-    case 'drivers':   renderDrivers();   break;
-    case 'customers': renderCustomers(); break;
-    case 'trips':     renderAdminTrips(); break;
-    case 'accounts':  renderAccounts();  break;
-    case 'settings':  renderSettings();  break;
+// ═════ HELPERS ═════
+function loginName(e) { return (e||'').split('@')[0]; }
+function displayName(e) {
+  if (!e) return '';
+  if (!e.includes('@')) return e;
+  const s = staffList.find(x => x.email===e || x.email===e.toLowerCase());
+  return s?.fullName || e.split('@')[0];
+}
+function fmtMoney(n) { return Number(n||0).toLocaleString('vi-VN') + ' ₫'; }
+function fmtDate(ts) {
+  if (!ts) return '—';
+  const d = ts?.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleString('vi-VN');
+}
+function toast(msg, type='info') {
+  const el = document.createElement('div');
+  el.className = 'toast ' + (type==='error'?'err':type);
+  el.textContent = msg;
+  document.getElementById('toast-wrap').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+function openModal(html) {
+  document.getElementById('modal-wrap').innerHTML =
+    `<div class="modal-overlay" onclick="if(event.target===this)closeModal()">${html}</div>`;
+}
+function closeModal() { document.getElementById('modal-wrap').innerHTML = ''; }
+function statusTag(s) {
+  return ({
+    pending:   '<span class="tag tag-orange">⏳ Chờ xác nhận</span>',
+    accepted:  '<span class="tag tag-blue">✅ Đã nhận</span>',
+    onride:    '<span class="tag tag-gold">🚗 Đang chạy</span>',
+    completed: '<span class="tag tag-green">✔ Hoàn thành</span>',
+    cancelled: '<span class="tag tag-red">✕ Đã huỷ</span>',
+  })[s] || `<span class="tag tag-gray">${s}</span>`;
+}
+function escapeHTML(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ════════════════════════
+//   1️⃣ TỔNG QUAN
+// ════════════════════════
+async function renderDashboard() {
+  const active   = Object.values(activeTrips);
+  const pending  = active.filter(t => t.status==='pending').length;
+  const accepted = active.filter(t => t.status==='accepted').length;
+  const onride   = active.filter(t => t.status==='onride').length;
+
+  let todayTrips = 0, revenue = 0;
+  try {
+    const { collection, getDocs, query, where } = window._firebase;
+    const today = new Date(); today.setHours(0,0,0,0);
+    const snap  = await getDocs(query(collection(window._db,'trips'), where('status','in',['completed','cancelled'])));
+    snap.docs.forEach(d => {
+      const t = d.data();
+      const at = t.createdAt?.toDate ? t.createdAt.toDate() : new Date(0);
+      if (at >= today) todayTrips++;
+      if (t.status === 'completed') revenue += (t.fare||0);
+    });
+  } catch {}
+
+  document.getElementById('main').innerHTML = `
+    <div class="ph"><div><h2 class="ph-title">Tổng quan</h2></div></div>
+    <div class="stats-grid">
+      <div class="stat"><div class="stat-label">Chờ xác nhận</div><div class="stat-val" style="color:var(--orange)">${pending}</div><div class="stat-sub">chuyến</div></div>
+      <div class="stat"><div class="stat-label">Đã nhận</div><div class="stat-val" style="color:var(--blue)">${accepted}</div><div class="stat-sub">chờ chạy</div></div>
+      <div class="stat"><div class="stat-label">Đang chạy</div><div class="stat-val" style="color:var(--green)">${onride}</div><div class="stat-sub">trên đường</div></div>
+      <div class="stat"><div class="stat-label">Hôm nay</div><div class="stat-val">${todayTrips}</div><div class="stat-sub">chuyến</div></div>
+      <div class="stat"><div class="stat-label">Doanh thu</div><div class="stat-val" style="color:var(--accent);font-size:18px">${fmtMoney(revenue)}</div><div class="stat-sub">tổng cộng</div></div>
+      <div class="stat"><div class="stat-label">Nhân viên</div><div class="stat-val">${staffList.filter(s=>s.active!==false).length}</div><div class="stat-sub">/ ${staffList.length} tổng</div></div>
+      <div class="stat"><div class="stat-label">Xe</div><div class="stat-val">${vehicleList.filter(v=>v.active!==false).length}</div><div class="stat-sub">/ ${vehicleList.length} tổng</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">🗺️ Chuyến đang hoạt động</div>
+      <div id="dash-trips"></div>
+    </div>`;
+  refreshDashTrips();
+}
+
+function refreshDashTrips() {
+  const el = document.getElementById('dash-trips');
+  if (!el) return;
+  const list = Object.values(activeTrips);
+  if (!list.length) { el.innerHTML = '<div class="empty">Không có chuyến đang hoạt động</div>'; return; }
+  el.innerHTML = `<div class="tbl-wrap"><table>
+    <thead><tr><th>Khách</th><th>SĐT</th><th>Nơi đón</th><th>Điểm đến</th><th>Nhân viên</th><th>Trạng thái</th><th></th></tr></thead>
+    <tbody>${list.map(t=>`<tr>
+      <td><strong>${escapeHTML(t.passengerName||t.customerName||'—')}</strong></td>
+      <td>${escapeHTML(t.passengerPhone||t.customerPhone||'—')}</td>
+      <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHTML(t.pickup||'')}</td>
+      <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHTML(t.dropoff||'')}</td>
+      <td>${escapeHTML(t.driverName||'—')}</td>
+      <td>${statusTag(t.status)}</td>
+      <td><button class="btn btn-ghost btn-xs" onclick="openTripDetail('${t.id}')">Xem</button></td>
+    </tr>`).join('')}</tbody></table></div>`;
+}
+
+// ════════════════════════
+//   2️⃣ NHÂN VIÊN
+// ════════════════════════
+function renderStaff() {
+  document.getElementById('main').innerHTML = `
+    <div class="ph">
+      <div><h2 class="ph-title">Quản lý nhân viên</h2></div>
+      <button class="btn btn-gold btn-sm" onclick="openAddStaffModal()">+ Thêm nhân viên</button>
+    </div>
+
+    <div class="card" style="border:2px solid var(--accent)">
+      <div class="card-title">🔑 Đổi mật khẩu Admin</div>
+      <div class="input-row">
+        <div class="field"><label>Mật khẩu hiện tại</label><input class="inp" type="password" id="admin-old-pwd" placeholder="Mật khẩu hiện tại"></div>
+        <div class="field"><label>Mật khẩu mới</label><input class="inp" type="password" id="admin-new-pwd" placeholder="Tối thiểu 6 ký tự"></div>
+      </div>
+      <button class="btn btn-gold btn-sm" onclick="changeAdminPassword()">🔑 Đổi mật khẩu admin</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">👥 Danh sách nhân viên</div>
+      <div id="staff-list-area"><div class="spinner"></div></div>
+    </div>`;
+  renderStaffList();
+}
+
+function renderStaffList() {
+  const area = document.getElementById('staff-list-area');
+  if (!area) return;
+  if (!staffList.length) { area.innerHTML = '<div class="empty">Chưa có nhân viên nào</div>'; return; }
+  area.innerHTML = `<div class="tbl-wrap"><table>
+    <thead><tr><th>Tên đăng nhập</th><th>Họ tên</th><th>SĐT</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+    <tbody>${staffList.map(s => {
+      const a = s.active !== false;
+      return `<tr style="${a?'':'opacity:.5'}">
+        <td style="font-weight:600">${escapeHTML(loginName(s.email))}</td>
+        <td>${escapeHTML(s.fullName||'—')}</td>
+        <td>${escapeHTML(s.phone||'—')}</td>
+        <td>${a ? '<span class="tag tag-green">✓ Hoạt động</span>' : '<span class="tag tag-red">✗ Đã khoá</span>'}</td>
+        <td style="display:flex;gap:4px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-xs" onclick="openEditStaff('${s.id}')">✏️ Sửa</button>
+          ${a
+            ? `<button class="btn btn-red btn-xs" onclick="deactivateStaff('${s.id}','${s.email}')">🚫 Khoá</button>`
+            : `<button class="btn btn-green btn-xs" onclick="reactivateStaff('${s.id}','${s.email}')">✅ Mở khoá</button>`}
+          <button class="btn btn-red btn-xs" onclick="deleteStaff('${s.id}','${s.email}')">🗑</button>
+        </td>
+      </tr>`;
+    }).join('')}</tbody></table></div>`;
+}
+
+async function getSecondaryAuth() {
+  const { initializeApp, getAuth } = window._firebase;
+  const secApp = initializeApp(window._app.options, 'sec_' + Date.now());
+  return getAuth(secApp);
+}
+
+async function changeAdminPassword() {
+  const oldPwd = document.getElementById('admin-old-pwd').value;
+  const newPwd = document.getElementById('admin-new-pwd').value;
+  if (!oldPwd || !newPwd) return toast('Nhập đủ mật khẩu hiện tại và mới', 'err');
+  if (newPwd.length < 6)  return toast('Mật khẩu mới tối thiểu 6 ký tự', 'err');
+  if (oldPwd === newPwd)  return toast('Mật khẩu mới phải khác mật khẩu cũ', 'err');
+  try {
+    const { signInWithEmailAndPassword, updatePassword } = window._firebase;
+    const cred = await signInWithEmailAndPassword(window._auth, ADMIN_EMAIL, oldPwd);
+    await updatePassword(cred.user, newPwd);
+    document.getElementById('admin-old-pwd').value = '';
+    document.getElementById('admin-new-pwd').value = '';
+    toast('✅ Đổi mật khẩu admin thành công!', 'ok');
+  } catch(e) {
+    toast(e.code==='auth/wrong-password'||e.code==='auth/invalid-credential'
+      ? '❌ Mật khẩu hiện tại không đúng!'
+      : '❌ ' + e.message, 'err');
   }
 }
 
-// ─── DASHBOARD ───
-async function renderDashboard(){
-  $('admin-main').innerHTML='<div class="spinner"></div>';
-  try{
-    const { collection, getDocs } = window._firebase;
-    const [dSnap, cSnap, tSnap] = await Promise.all([
-      getDocs(collection(window._db,'drivers')),
-      getDocs(collection(window._db,'customers')),
-      getDocs(collection(window._db,'trips')),
-    ]);
-    const drivers   = dSnap.docs.map(d=>d.data());
-    const trips     = tSnap.docs.map(d=>d.data());
-    const today     = new Date(); today.setHours(0,0,0,0);
-    const todayT    = trips.filter(t=>{ const d=t.createdAt?.toDate?t.createdAt.toDate():new Date(0); return d>=today; });
-    const revenue   = trips.filter(t=>t.status==='completed').reduce((s,t)=>s+(t.fare||0),0);
-    const online    = drivers.filter(d=>d.online).length;
-    const pending   = trips.filter(t=>t.status==='pending').length;
-    const recent    = tSnap.docs.map(d=>({id:d.id,...d.data()}))
-      .sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0)).slice(0,10);
-
-    $('admin-main').innerHTML=`
-      <div class="ph"><div><div class="ph-title">Dashboard</div><div class="ph-sub">Tổng quan hệ thống</div></div>
-        <button class="btn btn-ghost btn-sm" onclick="renderDashboard()">🔄 Làm mới</button></div>
-      <div class="stats-grid">
-        <div class="stat"><div class="stat-label">Tài xế online</div><div class="stat-val" style="color:var(--green)">${online}</div><div class="stat-sub">/ ${drivers.length} tổng</div></div>
-        <div class="stat"><div class="stat-label">Chuyến hôm nay</div><div class="stat-val">${todayT.length}</div><div class="stat-sub">chuyến</div></div>
-        <div class="stat"><div class="stat-label">Đang chờ</div><div class="stat-val" style="color:var(--orange)">${pending}</div><div class="stat-sub">chờ tài xế</div></div>
-        <div class="stat"><div class="stat-label">Doanh thu</div><div class="stat-val" style="color:var(--accent);font-size:18px">${fmtMoney(revenue)}</div><div class="stat-sub">tổng cộng</div></div>
-        <div class="stat"><div class="stat-label">Khách hàng</div><div class="stat-val">${cSnap.size}</div><div class="stat-sub">tài khoản</div></div>
-        <div class="stat"><div class="stat-label">Tổng chuyến</div><div class="stat-val">${trips.length}</div><div class="stat-sub">tất cả</div></div>
+function openAddStaffModal() {
+  openModal(`
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-title"><h3>➕ Thêm nhân viên</h3>
+        <button class="modal-close" onclick="closeModal()">✕</button>
       </div>
-      <div class="card">
-        <div class="card-title">Chuyến xe gần đây</div>
-        ${recent.length?`<div class="tbl-wrap"><table>
-          <thead><tr><th>Thời gian</th><th>Khách</th><th>Đón</th><th>Đến</th><th>Tài xế</th><th>Cước</th><th>Trạng thái</th></tr></thead>
-          <tbody>${recent.map(t=>`<tr>
-            <td style="color:var(--text3);font-size:12px;white-space:nowrap">${fmtDate(t.createdAt)}</td>
-            <td>${t.customerName||'—'}</td>
-            <td style="max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.pickup||''}</td>
-            <td style="max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.dropoff||''}</td>
-            <td>${t.driverName||'<span style="color:var(--text3)">Chưa có</span>'}</td>
-            <td style="color:var(--accent)">${t.fare?fmtMoney(t.fare):'—'}</td>
-            <td>${statusTag(t.status)}</td>
-          </tr>`).join('')}</tbody>
-        </table></div>`:'<div class="empty">Chưa có chuyến nào</div>'}
-      </div>`;
-  } catch(e){ $('admin-main').innerHTML=`<div class="empty">Lỗi: ${e.message}</div>`; }
-}
-
-// ─── QUẢN LÝ TÀI XẾ ───
-async function renderDrivers(){
-  $('admin-main').innerHTML='<div class="spinner"></div>';
-  try{
-    const snap = await window._firebase.getDocs(window._firebase.collection(window._db,'drivers'));
-    const list  = snap.docs.map(d=>({id:d.id,...d.data()}));
-    $('admin-main').innerHTML=`
-      <div class="ph">
-        <div><div class="ph-title">Tài xế</div><div class="ph-sub">${list.length} tài xế</div></div>
-        <button class="btn btn-gold" onclick="openDriverModal()">+ Thêm tài xế</button>
+      <div class="field"><label>Tên đăng nhập</label>
+        <div style="position:relative">
+          <input class="inp" id="su" placeholder="VD: nguyenvan" autocomplete="off">
+          <span class="login-suffix">${DOMAIN}</span>
+        </div>
       </div>
-      <div class="card">
-        <div class="tbl-wrap"><table>
-          <thead><tr><th>Họ tên</th><th>Email</th><th>SĐT</th><th>Loại xe</th><th>Biển số</th><th>Trạng thái</th><th>Online</th><th></th></tr></thead>
-          <tbody>${list.length?list.map(d=>`<tr>
-            <td><strong>${d.fullName}</strong></td>
-            <td style="color:var(--text3)">${d.email}</td>
-            <td>${d.phone||'—'}</td>
-            <td>${d.vehicle||'—'}</td>
-            <td>${d.licensePlate||'—'}</td>
-            <td>${d.active!==false?'<span class="tag tag-green">Hoạt động</span>':'<span class="tag tag-red">Đã khoá</span>'}</td>
-            <td>${d.online?'<span class="tag tag-blue">Online</span>':'<span class="tag tag-gray">Offline</span>'}</td>
-            <td style="white-space:nowrap">
-              <button class="btn btn-ghost btn-xs" onclick='openDriverModal(${JSON.stringify(d).replace(/'/g,"&#39;")})'>Sửa</button>
-              <button class="btn btn-xs ${d.active!==false?'btn-outline':'btn-green'}" style="margin-left:4px" onclick="toggleDriverActive('${d.id}',${d.active!==false})">${d.active!==false?'Khoá':'Mở'}</button>
-              <button class="btn btn-red btn-xs" style="margin-left:4px" onclick="deleteDriver('${d.id}','${d.fullName.replace(/'/g,'')}')">Xoá</button>
-            </td>
-          </tr>`).join(''):'<tr><td colspan="8" class="empty">Chưa có tài xế nào</td></tr>'}</tbody>
-        </table></div>
-      </div>`;
-  } catch(e){ $('admin-main').innerHTML=`<div class="empty">Lỗi: ${e.message}</div>`; }
-}
-
-function openDriverModal(driver=null){
-  const isEdit = !!driver;
-  document.body.insertAdjacentHTML('beforeend',`
-    <div class="modal-overlay" id="driver-modal" onclick="if(event.target.id==='driver-modal')closeModal('driver-modal')">
-      <div class="modal">
-        <div class="modal-title">${isEdit?'Sửa tài xế':'Thêm tài xế mới'}<button class="modal-close" onclick="closeModal('driver-modal')">✕</button></div>
-        <div class="field"><label>Họ tên</label><input class="inp" id="df-name" value="${driver?.fullName||''}"></div>
-        <div class="input-row">
-          <div class="field"><label>Email / Username</label>
-            <div style="position:relative">
-              <input class="inp" id="df-email" value="${driver?driver.email.replace(DRIVER_DOMAIN,''):''}" ${isEdit?'readonly style="opacity:.6"':''} oninput="updateDfSuffix()">
-              <span id="df-suffix" class="login-suffix">${isEdit||driver?.email.includes('@')?'':DRIVER_DOMAIN}</span>
-            </div>
-          </div>
-          <div class="field"><label>SĐT</label><input class="inp" id="df-phone" value="${driver?.phone||''}"></div>
+      <div class="field"><label>Họ tên</label>
+        <input class="inp" id="sfn" placeholder="Nguyễn Văn A">
+      </div>
+      <div class="input-row">
+        <div class="field"><label>SĐT</label><input class="inp" id="s-phone" placeholder="0912345678"></div>
+        <div class="field"><label>Mật khẩu</label>
+          <input class="inp" type="password" id="sp" placeholder="Tối thiểu 6 ký tự" autocomplete="new-password">
         </div>
-        <div class="input-row">
-          <div class="field"><label>Loại xe</label><input class="inp" id="df-vehicle" value="${driver?.vehicle||''}" placeholder="Honda Wave, Vios..."></div>
-          <div class="field"><label>Biển số</label><input class="inp" id="df-plate" value="${driver?.licensePlate||''}" placeholder="51A-123.45"></div>
-        </div>
-        ${!isEdit?`<div class="field"><label>Mật khẩu</label><input class="inp" id="df-pass" type="password" placeholder="Tối thiểu 6 ký tự"></div>`:''}
-        <div class="modal-footer">
-          <button class="btn btn-ghost" onclick="closeModal('driver-modal')">Huỷ</button>
-          <button class="btn btn-gold" onclick="${isEdit?`saveDriver('${driver.id}')`:' createDriver()'}">${isEdit?'Lưu thay đổi':'Tạo tài xế'}</button>
-        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline btn-sm" onclick="closeModal()">Hủy</button>
+        <button class="btn btn-gold btn-sm" id="add-staff-btn" onclick="addStaff()">✅ Tạo tài khoản</button>
       </div>
     </div>`);
 }
 
-function updateDfSuffix(){
-  const v=$('df-email')?.value.trim();
-  const s=$('df-suffix'); if(s) s.textContent=(!v||v.includes('@'))?'':DRIVER_DOMAIN;
-}
-
-async function createDriver(){
-  let email   = $('df-email').value.trim().toLowerCase();
-  const name  = $('df-name').value.trim();
-  const phone = $('df-phone').value.trim();
-  const veh   = $('df-vehicle').value.trim();
-  const plate = $('df-plate').value.trim();
-  const pass  = $('df-pass').value;
-  if(!email||!name||!pass) return toast('Vui lòng điền đầy đủ','err');
-  if(pass.length<6)        return toast('Mật khẩu tối thiểu 6 ký tự','err');
-  if(!email.includes('@')) email += DRIVER_DOMAIN;
-  try{
-    // Dùng REST API để tạo user mà không logout admin
-    const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${API_KEY}`,{
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ email, password:pass, returnSecureToken:true })
+async function addStaff() {
+  let u       = document.getElementById('su').value.trim().toLowerCase();
+  const fn    = document.getElementById('sfn').value.trim();
+  const p     = document.getElementById('sp').value;
+  const phone = document.getElementById('s-phone').value.trim();
+  if (!u)           return toast('Nhập tên đăng nhập', 'err');
+  if (p.length < 6) return toast('Mật khẩu tối thiểu 6 ký tự', 'err');
+  if (!u.includes('@')) u += DOMAIN;
+  if (staffList.find(s => (s.email||'').toLowerCase() === u)) return toast('Tài khoản đã tồn tại', 'err');
+  const btn = document.getElementById('add-staff-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Đang tạo...'; }
+  try {
+    const { createUserWithEmailAndPassword, collection, addDoc } = window._firebase;
+    const secAuth = await getSecondaryAuth();
+    await createUserWithEmailAndPassword(secAuth, u, p);
+    await secAuth.signOut();
+    const ref = await addDoc(collection(window._db,'staff'), {
+      email: u, fullName: fn, phone, active: true, pwd: p,
+      createdAt: new Date().toISOString(), createdBy: currentUser.email
     });
-    const data = await res.json();
-    if(data.error) return toast('Lỗi tạo tài khoản: '+data.error.message,'err');
-    const { doc, setDoc, serverTimestamp } = window._firebase;
-    await setDoc(doc(window._db,'drivers',data.localId),{
-      email, fullName:name, phone, vehicle:veh, licensePlate:plate,
-      active:true, online:false, createdAt:serverTimestamp(), uid:data.localId
-    });
-    closeModal('driver-modal');
-    toast('✅ Đã tạo tài xế '+name,'ok');
-    renderDrivers();
-  } catch(e){ toast('Lỗi: '+e.message,'err'); }
+    staffList.push({ id: ref.id, email: u, fullName: fn, phone, active: true, pwd: p });
+    closeModal(); toast(`✅ Đã tạo tài khoản: ${fn||loginName(u)}`, 'ok');
+    renderStaffList();
+  } catch(e) {
+    toast('❌ ' + (e.code==='auth/email-already-in-use' ? 'Tên đăng nhập đã tồn tại!' : e.message), 'err');
+    if (btn) { btn.disabled = false; btn.textContent = '✅ Tạo tài khoản'; }
+  }
 }
 
-async function saveDriver(id){
-  const name  = $('df-name').value.trim();
-  const phone = $('df-phone').value.trim();
-  const veh   = $('df-vehicle').value.trim();
-  const plate = $('df-plate').value.trim();
-  if(!name) return toast('Nhập họ tên','err');
-  await window._firebase.updateDoc(window._firebase.doc(window._db,'drivers',id),{fullName:name,phone,vehicle:veh,licensePlate:plate});
-  closeModal('driver-modal'); toast('Đã cập nhật','ok'); renderDrivers();
-}
-
-async function toggleDriverActive(id, cur){
-  if(!confirm(`${cur?'Khoá':'Mở'} tài xế này?`)) return;
-  await window._firebase.updateDoc(window._firebase.doc(window._db,'drivers',id),{active:!cur});
-  toast(cur?'Đã khoá tài khoản':'Đã mở tài khoản','ok'); renderDrivers();
-}
-
-async function deleteDriver(id, name){
-  if(!confirm(`Xoá tài xế "${name}"? Không thể hoàn tác!`)) return;
-  await window._firebase.deleteDoc(window._firebase.doc(window._db,'drivers',id));
-  toast('Đã xoá '+name,'ok'); renderDrivers();
-}
-
-// ─── QUẢN LÝ KHÁCH HÀNG ───
-async function renderCustomers(){
-  $('admin-main').innerHTML='<div class="spinner"></div>';
-  try{
-    const snap = await window._firebase.getDocs(window._firebase.collection(window._db,'customers'));
-    const list  = snap.docs.map(d=>({id:d.id,...d.data()}));
-    $('admin-main').innerHTML=`
-      <div class="ph"><div><div class="ph-title">Khách hàng</div><div class="ph-sub">${list.length} khách</div></div></div>
-      <div class="card"><div class="tbl-wrap"><table>
-        <thead><tr><th>Họ tên</th><th>Email</th><th>SĐT</th><th>Ngày tạo</th><th>Trạng thái</th><th></th></tr></thead>
-        <tbody>${list.length?list.map(c=>`<tr>
-          <td><strong>${c.fullName}</strong></td>
-          <td style="color:var(--text3)">${c.email}</td>
-          <td>${c.phone||'—'}</td>
-          <td style="color:var(--text3);font-size:12px">${fmtDate(c.createdAt)}</td>
-          <td>${c.active!==false?'<span class="tag tag-green">Hoạt động</span>':'<span class="tag tag-red">Đã khoá</span>'}</td>
-          <td style="white-space:nowrap">
-            <button class="btn btn-xs ${c.active!==false?'btn-outline':'btn-green'}" onclick="toggleCustomerActive('${c.id}',${c.active!==false})">${c.active!==false?'Khoá':'Mở'}</button>
-            <button class="btn btn-red btn-xs" style="margin-left:4px" onclick="deleteCustomer('${c.id}','${c.fullName.replace(/'/g,'')}')">Xoá</button>
-          </td>
-        </tr>`).join(''):'<tr><td colspan="6" class="empty">Chưa có khách hàng</td></tr>'}</tbody>
-      </table></div></div>`;
-  } catch(e){ $('admin-main').innerHTML=`<div class="empty">Lỗi: ${e.message}</div>`; }
-}
-
-async function toggleCustomerActive(id, cur){
-  if(!confirm(`${cur?'Khoá':'Mở'} tài khoản này?`)) return;
-  await window._firebase.updateDoc(window._firebase.doc(window._db,'customers',id),{active:!cur});
-  toast(cur?'Đã khoá':'Đã mở','ok'); renderCustomers();
-}
-
-async function deleteCustomer(id, name){
-  if(!confirm(`Xoá khách hàng "${name}"?`)) return;
-  await window._firebase.deleteDoc(window._firebase.doc(window._db,'customers',id));
-  toast('Đã xoá','ok'); renderCustomers();
-}
-
-// ─── QUẢN LÝ CHUYẾN XE ───
-async function renderAdminTrips(filterStatus=''){
-  $('admin-main').innerHTML='<div class="spinner"></div>';
-  try{
-    const snap = await window._firebase.getDocs(window._firebase.collection(window._db,'trips'));
-    let list = snap.docs.map(d=>({id:d.id,...d.data()}))
-      .sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
-    if(filterStatus) list=list.filter(t=>t.status===filterStatus);
-    $('admin-main').innerHTML=`
-      <div class="ph"><div><div class="ph-title">Chuyến xe</div><div class="ph-sub">${list.length} chuyến</div></div></div>
-      <div class="tabs">
-        ${['','pending','accepted','onride','completed','cancelled'].map(s=>
-          `<div class="tab ${filterStatus===s?'active':''}" onclick="renderAdminTrips('${s}')">${{''   :'Tất cả','pending':'Chờ','accepted':'Đã nhận','onride':'Đang chạy','completed':'Hoàn thành','cancelled':'Đã huỷ'}[s]}</div>`
-        ).join('')}
+function openEditStaff(id) {
+  const s = staffList.find(x => x.id === id);
+  if (!s) return;
+  openModal(`
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-title"><h3>✏️ Sửa: ${escapeHTML(displayName(s.email))}</h3>
+        <button class="modal-close" onclick="closeModal()">✕</button>
       </div>
-      <div class="card"><div class="tbl-wrap"><table>
-        <thead><tr><th>Thời gian</th><th>Khách</th><th>Đón</th><th>Đến</th><th>Tài xế</th><th>Cước</th><th>Trạng thái</th><th></th></tr></thead>
-        <tbody>${list.length?list.map(t=>`<tr>
-          <td style="color:var(--text3);font-size:12px;white-space:nowrap">${fmtDate(t.createdAt)}</td>
-          <td>${t.customerName||'—'}</td>
-          <td style="max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.pickup||''}</td>
-          <td style="max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.dropoff||''}</td>
-          <td>${t.driverName||'<span style="color:var(--text3)">Chưa có</span>'}</td>
-          <td style="color:var(--accent)">${t.fare?fmtMoney(t.fare):'—'}</td>
-          <td>${statusTag(t.status)}</td>
-          <td>${['pending','accepted','onride'].includes(t.status)?`<button class="btn btn-red btn-xs" onclick="adminCancelTrip('${t.id}')">Huỷ</button>`:'—'}</td>
-        </tr>`).join(''):'<tr><td colspan="8" class="empty">Không có chuyến</td></tr>'}</tbody>
-      </table></div></div>`;
-  } catch(e){ $('admin-main').innerHTML=`<div class="empty">Lỗi: ${e.message}</div>`; }
+      <div class="field"><label>Họ tên</label>
+        <input class="inp" id="ef" value="${escapeHTML(s.fullName||'')}">
+      </div>
+      <div class="input-row">
+        <div class="field"><label>SĐT</label><input class="inp" id="e-phone" value="${escapeHTML(s.phone||'')}"></div>
+        <div class="field"><label>Mật khẩu mới (để trống nếu không đổi)</label>
+          <input class="inp" type="password" id="ep" placeholder="Tối thiểu 6 ký tự" autocomplete="new-password">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline btn-sm" onclick="closeModal()">Hủy</button>
+        <button class="btn btn-gold btn-sm" id="edit-staff-btn" onclick="saveEditStaff('${id}')">💾 Lưu</button>
+      </div>
+    </div>`);
 }
 
-async function adminCancelTrip(id){
-  if(!confirm('Huỷ chuyến này?')) return;
-  await window._firebase.updateDoc(window._firebase.doc(window._db,'trips',id),{status:'cancelled'});
-  toast('Đã huỷ','ok'); renderAdminTrips();
+async function saveEditStaff(id) {
+  const fn    = document.getElementById('ef').value.trim();
+  const np    = document.getElementById('ep').value;
+  const phone = document.getElementById('e-phone').value.trim();
+  if (np && np.length > 0 && np.length < 6) return toast('Mật khẩu tối thiểu 6 ký tự', 'err');
+  const s   = staffList.find(x => x.id === id); if (!s) return;
+  const btn = document.getElementById('edit-staff-btn');
+  const update = { fullName: fn, phone };
+  if (np && np.length >= 6) {
+    if (!s.pwd) return toast('Không tìm thấy mật khẩu cũ. Hãy xoá và tạo lại.', 'err');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Đang đổi...'; }
+    try {
+      const { signInWithEmailAndPassword, updatePassword } = window._firebase;
+      const secAuth = await getSecondaryAuth();
+      const cred    = await signInWithEmailAndPassword(secAuth, s.email, s.pwd);
+      await updatePassword(cred.user, np);
+      await secAuth.signOut();
+      update.pwd = np;
+      await window._firebase.updateDoc(window._firebase.doc(window._db,'staff',id), update);
+      Object.assign(s, update);
+      closeModal(); toast('✅ Đã đổi mật khẩu thành công!', 'ok');
+      renderStaffList();
+    } catch(e) {
+      toast('❌ ' + (e.code==='auth/wrong-password'||e.code==='auth/invalid-credential'
+        ? 'Mật khẩu cũ không khớp. Hãy xoá và tạo lại.' : e.message), 'err');
+      if (btn) { btn.disabled = false; btn.textContent = '💾 Lưu'; }
+    }
+  } else {
+    await window._firebase.updateDoc(window._firebase.doc(window._db,'staff',id), update);
+    Object.assign(s, update);
+    closeModal(); toast('✅ Đã cập nhật', 'ok');
+    renderStaffList();
+  }
 }
 
-// ─── TÀI KHOẢN ADMIN ───
-function renderAccounts(){
-  $('admin-main').innerHTML=`
-    <div class="ph"><div><div class="ph-title">Tài khoản</div></div></div>
-    <div class="card" style="max-width:460px">
-      <div class="card-title">Đổi mật khẩu Admin</div>
-      <div class="field"><label>Mật khẩu mới</label><input class="inp" id="apw-new" type="password" placeholder="Tối thiểu 6 ký tự"></div>
-      <div class="field"><label>Xác nhận</label><input class="inp" id="apw-cf" type="password" placeholder="Nhập lại mật khẩu"></div>
-      <button class="btn btn-gold" onclick="changeAdminPw()">Đổi mật khẩu</button>
+async function deactivateStaff(id, email) {
+  if (!confirm(`🚫 Khoá tài khoản "${displayName(email)}"?`)) return;
+  const e = (email||'').toLowerCase().trim();
+  const { doc, updateDoc, getDoc, setDoc } = window._firebase;
+  await updateDoc(doc(window._db,'staff',id), { active: false });
+  const disRef = doc(window._db,'config','disabled');
+  const snap   = await getDoc(disRef);
+  const cur    = snap.exists() ? (snap.data().emails||[]).map(x=>(x||'').toLowerCase().trim()) : [];
+  if (!cur.includes(e)) cur.push(e);
+  await setDoc(disRef, { emails: cur });
+  staffList = staffList.map(s => s.id===id ? {...s, active:false} : s);
+  toast(`✅ Đã khoá: ${displayName(email)}`, 'ok'); renderStaffList();
+}
+
+async function reactivateStaff(id, email) {
+  if (!confirm(`✅ Mở khoá tài khoản "${displayName(email)}"?`)) return;
+  const e = (email||'').toLowerCase().trim();
+  const { doc, updateDoc, getDoc, setDoc } = window._firebase;
+  await updateDoc(doc(window._db,'staff',id), { active: true });
+  const disRef = doc(window._db,'config','disabled');
+  const snap   = await getDoc(disRef);
+  if (snap.exists()) {
+    const cur = (snap.data().emails||[]).filter(x => (x||'').toLowerCase().trim() !== e);
+    await setDoc(disRef, { emails: cur });
+  }
+  staffList = staffList.map(s => s.id===id ? {...s, active:true} : s);
+  toast(`✅ Đã mở khoá: ${displayName(email)}`, 'ok'); renderStaffList();
+}
+
+async function deleteStaff(id, email) {
+  if (!confirm(`Xoá nhân viên "${displayName(email)}"? Không thể hoàn tác!`)) return;
+  await window._firebase.deleteDoc(window._firebase.doc(window._db,'staff',id));
+  staffList = staffList.filter(s => s.id !== id);
+  toast('Đã xoá', 'ok'); renderStaffList();
+}
+
+// ════════════════════════
+//   3️⃣ QUẢN LÝ XE
+// ════════════════════════
+function renderVehicles() {
+  document.getElementById('main').innerHTML = `
+    <div class="ph">
+      <div><h2 class="ph-title">Quản lý xe</h2><div class="ph-sub">${vehicleList.length} xe</div></div>
+      <button class="btn btn-gold btn-sm" onclick="openAddVehicleModal()">+ Thêm xe</button>
+    </div>
+    <div class="card">
+      <div id="vehicle-list-area"><div class="spinner"></div></div>
     </div>`;
+  renderVehicleList();
 }
 
-async function changeAdminPw(){
-  const np=$('apw-new').value, cp=$('apw-cf').value;
-  if(!np||np.length<6)  return toast('Mật khẩu tối thiểu 6 ký tự','err');
-  if(np!==cp)           return toast('Mật khẩu không khớp','err');
-  try{
-    await window._firebase.updatePassword(window._auth.currentUser, np);
-    toast('Đã đổi mật khẩu','ok'); $('apw-new').value=''; $('apw-cf').value='';
-  } catch(e){ toast('Lỗi: '+e.message,'err'); }
+function renderVehicleList() {
+  const area = document.getElementById('vehicle-list-area');
+  if (!area) return;
+  if (!vehicleList.length) { area.innerHTML = '<div class="empty">Chưa có xe nào</div>'; return; }
+  area.innerHTML = `<div class="tbl-wrap"><table>
+    <thead><tr><th>Biển số</th><th>Hãng xe</th><th>Loại</th><th>Màu</th><th>Tài xế phụ trách</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+    <tbody>${vehicleList.map(v => {
+      const a = v.active !== false;
+      return `<tr style="${a?'':'opacity:.5'}">
+        <td><strong>${escapeHTML(v.plate||'—')}</strong></td>
+        <td>${escapeHTML(v.brand||'—')}</td>
+        <td>${escapeHTML(v.type||'—')}</td>
+        <td>${escapeHTML(v.color||'—')}</td>
+        <td>${escapeHTML(v.driverName||'—')}</td>
+        <td>${a ? '<span class="tag tag-green">✓ Hoạt động</span>' : '<span class="tag tag-red">✗ Ngừng</span>'}</td>
+        <td style="display:flex;gap:4px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-xs" onclick="openEditVehicle('${v.id}')">✏️</button>
+          ${a
+            ? `<button class="btn btn-red btn-xs" onclick="toggleVehicle('${v.id}',false)">Tắt</button>`
+            : `<button class="btn btn-green btn-xs" onclick="toggleVehicle('${v.id}',true)">Bật</button>`}
+          <button class="btn btn-red btn-xs" onclick="deleteVehicle('${v.id}')">🗑</button>
+        </td>
+      </tr>`;
+    }).join('')}</tbody></table></div>`;
 }
 
-// ─── CÀI ĐẶT ───
-function renderSettings(){
-  $('admin-main').innerHTML=`
-    <div class="ph"><div><div class="ph-title">Cài đặt</div></div></div>
-    <div class="card" style="max-width:460px">
-      <div class="card-title">Cài đặt ứng dụng</div>
-      <div class="field"><label>Tên ứng dụng</label><input class="inp" id="cfg-name" value="${appConfig.name||'GrapApp'}"></div>
+function openAddVehicleModal(v=null) {
+  const isEdit = !!v;
+  openModal(`
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-title"><h3>${isEdit?'✏️ Sửa xe':'➕ Thêm xe mới'}</h3>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="input-row">
+        <div class="field"><label>Biển số</label><input class="inp" id="v-plate" value="${escapeHTML(v?.plate||'')}" placeholder="51A-123.45"></div>
+        <div class="field"><label>Hãng xe</label><input class="inp" id="v-brand" value="${escapeHTML(v?.brand||'')}" placeholder="Honda, Toyota..."></div>
+      </div>
+      <div class="input-row">
+        <div class="field"><label>Loại xe</label>
+          <select class="inp" id="v-type">
+            ${['Xe máy','Xe 4 chỗ','Xe 7 chỗ'].map(t=>`<option ${v?.type===t?'selected':''}>${t}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field"><label>Màu sắc</label><input class="inp" id="v-color" value="${escapeHTML(v?.color||'')}" placeholder="Đen, Trắng..."></div>
+      </div>
+      <div class="field"><label>Tài xế phụ trách</label>
+        <select class="inp" id="v-driver">
+          <option value="">— Chưa gán —</option>
+          ${staffList.filter(s=>s.active!==false).map(s=>{
+            const nm = s.fullName||loginName(s.email);
+            return `<option value="${s.id}" data-name="${escapeHTML(nm)}" ${v?.driverId===s.id?'selected':''}>${escapeHTML(nm)}</option>`;
+          }).join('')}
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline btn-sm" onclick="closeModal()">Hủy</button>
+        <button class="btn btn-gold btn-sm" onclick="${isEdit?`saveVehicle('${v.id}')`:'addVehicle()'}">${isEdit?'💾 Lưu':'✅ Thêm xe'}</button>
+      </div>
+    </div>`);
+}
+
+async function addVehicle() {
+  const plate = document.getElementById('v-plate').value.trim();
+  const brand = document.getElementById('v-brand').value.trim();
+  const type  = document.getElementById('v-type').value;
+  const color = document.getElementById('v-color').value.trim();
+  const sel   = document.getElementById('v-driver');
+  const driverId   = sel.value;
+  const driverName = sel.value ? sel.options[sel.selectedIndex].dataset.name : '';
+  if (!plate) return toast('Nhập biển số', 'err');
+  const ref = await window._firebase.addDoc(window._firebase.collection(window._db,'vehicles'), {
+    plate, brand, type, color, driverId: driverId||'', driverName: driverName||'',
+    active: true, createdAt: window._firebase.serverTimestamp()
+  });
+  vehicleList.push({ id: ref.id, plate, brand, type, color, driverId, driverName, active: true });
+  closeModal(); toast('✅ Đã thêm xe '+plate, 'ok'); renderVehicleList();
+}
+
+function openEditVehicle(id) {
+  const v = vehicleList.find(x => x.id === id);
+  if (v) openAddVehicleModal(v);
+}
+
+async function saveVehicle(id) {
+  const plate = document.getElementById('v-plate').value.trim();
+  const brand = document.getElementById('v-brand').value.trim();
+  const type  = document.getElementById('v-type').value;
+  const color = document.getElementById('v-color').value.trim();
+  const sel   = document.getElementById('v-driver');
+  const driverId   = sel.value;
+  const driverName = sel.value ? sel.options[sel.selectedIndex].dataset.name : '';
+  if (!plate) return toast('Nhập biển số', 'err');
+  const data = { plate, brand, type, color, driverId: driverId||'', driverName: driverName||'' };
+  await window._firebase.updateDoc(window._firebase.doc(window._db,'vehicles',id), data);
+  vehicleList = vehicleList.map(v => v.id===id ? {...v,...data} : v);
+  closeModal(); toast('✅ Đã cập nhật', 'ok'); renderVehicleList();
+}
+
+async function toggleVehicle(id, active) {
+  await window._firebase.updateDoc(window._firebase.doc(window._db,'vehicles',id), { active });
+  vehicleList = vehicleList.map(v => v.id===id ? {...v, active} : v);
+  toast(active ? 'Đã bật xe' : 'Đã tắt xe', 'ok'); renderVehicleList();
+}
+
+async function deleteVehicle(id) {
+  if (!confirm('Xoá xe này?')) return;
+  await window._firebase.deleteDoc(window._firebase.doc(window._db,'vehicles',id));
+  vehicleList = vehicleList.filter(v => v.id !== id);
+  toast('Đã xoá', 'ok'); renderVehicleList();
+}
+
+// ════════════════════════
+//   4️⃣ ĐẶT XE
+// ════════════════════════
+function renderBooking() {
+  const acts = Object.values(activeTrips);
+  document.getElementById('main').innerHTML = `
+    <div class="ph">
+      <div><h2 class="ph-title">${isAdmin ? 'Đặt xe' : 'Chuyến xe'}</h2><div class="ph-sub" id="bk-count">${acts.length} chuyến đang hoạt động</div></div>
+      ${isAdmin ? `<button class="btn btn-gold btn-sm" onclick="openCreateTripModal()">+ Tạo chuyến</button>` : ''}
+    </div>
+    <div class="tabs">
+      <div class="tab active" id="bk-tab-all"      onclick="filterBooking('all')">Tất cả</div>
+      <div class="tab"        id="bk-tab-pending"  onclick="filterBooking('pending')">⏳ Chờ xác nhận</div>
+      <div class="tab"        id="bk-tab-accepted" onclick="filterBooking('accepted')">✅ Đã nhận</div>
+      <div class="tab"        id="bk-tab-onride"   onclick="filterBooking('onride')">🚗 Đang chạy</div>
+    </div>
+    <div id="trip-grid-area"></div>`;
+  filterBooking('all');
+}
+
+function filterBooking(f) {
+  bookingFilter = f;
+  ['all','pending','accepted','onride'].forEach(k => {
+    const el = document.getElementById('bk-tab-'+k);
+    if (el) el.classList.toggle('active', k===f);
+  });
+  refreshTripGrid();
+}
+
+function refreshTripGrid() {
+  if (currentPage !== 'booking') return;
+  const area  = document.getElementById('trip-grid-area');
+  const count = document.getElementById('bk-count');
+  if (!area) return;
+  let trips = Object.values(activeTrips);
+  if (bookingFilter !== 'all') trips = trips.filter(t => t.status === bookingFilter);
+  trips.sort((a,b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
+  if (count) count.textContent = `${trips.length} chuyến${bookingFilter!=='all'?' ('+bookingFilter+')':''}`;
+  if (!trips.length) { area.innerHTML = `<div class="empty">Không có chuyến</div>`; return; }
+  area.innerHTML = `<div class="trip-grid">${trips.map(t => `
+    <div class="t-card ${t.status} ${currentTripId===t.id?'selected':''}" onclick="openTripDetail('${t.id}')">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:6px">
+        <strong style="font-size:14px">${escapeHTML(t.passengerName||t.customerName||'Khách')}</strong>
+        ${statusTag(t.status)}
+      </div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:6px">📞 ${escapeHTML(t.passengerPhone||t.customerPhone||'—')}</div>
+      <div style="font-size:12px;color:var(--green);margin-bottom:2px">📍 ${escapeHTML(t.pickup||'')}</div>
+      <div style="font-size:12px;color:var(--red)">🏁 ${escapeHTML(t.dropoff||'')}</div>
+      ${t.driverName ? `<div style="font-size:11px;color:var(--accent);margin-top:6px">🧑 ${escapeHTML(t.driverName)}</div>` : ''}
+      <div style="font-size:11px;color:var(--text3);margin-top:4px">🕒 ${fmtDate(t.createdAt)}</div>
+    </div>`).join('')}</div>`;
+}
+
+function openTripDetail(id) {
+  currentTripId = id;
+  renderTP(id);
+  document.getElementById('trip-panel').classList.add('open');
+}
+function closeTP() {
+  currentTripId = null;
+  document.getElementById('trip-panel').classList.remove('open');
+}
+
+function renderTP(id) {
+  const t = activeTrips[id];
+  if (!t) { closeTP(); return; }
+  document.getElementById('tp-title').textContent = t.passengerName||t.customerName||'Khách';
+  document.getElementById('tp-meta').textContent  = fmtDate(t.createdAt);
+  document.getElementById('tp-body').innerHTML = `
+    <div style="margin-bottom:14px">
+      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">Khách</div>
+      <div style="font-size:14px;font-weight:600">${escapeHTML(t.passengerName||t.customerName||'—')}</div>
+      <div style="font-size:13px;color:var(--text2);margin-top:3px">📞 ${escapeHTML(t.passengerPhone||t.customerPhone||'—')}</div>
+    </div>
+    <div class="divider"></div>
+    <div style="margin:14px 0">
+      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">Lộ trình</div>
+      <div style="background:var(--surface2);border-radius:8px;padding:10px;font-size:13px">
+        <div style="color:var(--green);margin-bottom:6px">📍 ${escapeHTML(t.pickup||'—')}</div>
+        <div style="color:var(--red)">🏁 ${escapeHTML(t.dropoff||'—')}</div>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <div style="margin:14px 0;font-size:13px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+        <span style="color:var(--text3)">Loại xe</span><span>${escapeHTML(t.vehicleType||'—')}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+        <span style="color:var(--text3)">Khoảng cách</span><span>${t.distance ? t.distance+'km' : '—'}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between">
+        <span style="color:var(--text3)">Cước</span>
+        <span style="color:var(--accent);font-weight:700">${t.fare ? fmtMoney(t.fare) : 'Tính sau'}</span>
+      </div>
+      ${t.note ? `<div style="font-size:12px;color:var(--text3);margin-top:8px;padding:8px;background:var(--surface2);border-radius:6px">💬 ${escapeHTML(t.note)}</div>` : ''}
+    </div>
+    ${t.driverName ? `
+      <div class="divider"></div>
+      <div style="margin-top:14px;font-size:13px">🧑 Tài xế: <strong>${escapeHTML(t.driverName)}</strong></div>` : ''}
+    ${isAdmin && t.status === 'pending' ? `
+      <div class="divider"></div>
+      <div style="margin-top:14px">
+        <div class="field"><label>Giao cho nhân viên</label>
+          <select class="inp" id="tp-driver-sel">
+            <option value="">— Chọn nhân viên —</option>
+            ${staffList.filter(s=>s.active!==false).map(s=>{
+              const nm=s.fullName||loginName(s.email);
+              return `<option value="${s.id}" data-name="${escapeHTML(nm)}">${escapeHTML(nm)}</option>`;
+            }).join('')}
+          </select>
+        </div>
+        <div class="field"><label>Cước (đ) — để trống nếu tính sau</label>
+          <input class="inp" id="tp-fare" type="number" value="${t.fare||''}" placeholder="0">
+        </div>
+      </div>` : ''}`;
+
+  const foot = document.getElementById('tp-foot');
+  if (isAdmin) {
+    if (t.status === 'pending') {
+      foot.innerHTML = `
+        <button class="btn btn-gold btn-full" style="margin-bottom:8px" onclick="confirmTrip('${id}')">✅ Xác nhận & Giao tài xế</button>
+        <button class="btn btn-red btn-full" onclick="cancelTrip('${id}')">✕ Huỷ chuyến</button>`;
+    } else if (t.status === 'accepted') {
+      foot.innerHTML = `
+        <button class="btn btn-blue btn-full" style="margin-bottom:8px" onclick="startTrip('${id}')">🚗 Bắt đầu chạy</button>
+        <button class="btn btn-red btn-full" onclick="cancelTrip('${id}')">✕ Huỷ</button>`;
+    } else if (t.status === 'onride') {
+      foot.innerHTML = `
+        <button class="btn btn-green btn-full" style="margin-bottom:8px" onclick="completeTrip('${id}')">✔ Hoàn thành</button>
+        <button class="btn btn-red btn-full" onclick="cancelTrip('${id}')">✕ Huỷ</button>`;
+    } else foot.innerHTML = '';
+  } else {
+    if (t.status === 'accepted') {
+      foot.innerHTML = `
+        <button class="btn btn-gold btn-full" style="margin-bottom:8px" onclick="startTrip('${id}')">🚗 Bắt đầu chạy</button>
+        <button class="btn btn-red btn-full" onclick="cancelTrip('${id}')">✕ Huỷ</button>`;
+    } else if (t.status === 'onride') {
+      foot.innerHTML = `<button class="btn btn-green btn-full" onclick="completeTrip('${id}')">✔ Hoàn thành</button>`;
+    } else foot.innerHTML = '';
+  }
+}
+
+async function confirmTrip(id) {
+  const sel  = document.getElementById('tp-driver-sel');
+  const fare = parseInt(document.getElementById('tp-fare')?.value)||0;
+  if (!sel?.value) return toast('Chọn nhân viên để giao', 'err');
+  const driverName = sel.options[sel.selectedIndex].dataset.name;
+  await window._firebase.updateDoc(window._firebase.doc(window._db,'trips',id), {
+    status: 'accepted', driverId: sel.value, driverName,
+    fare: fare||null, acceptedAt: window._firebase.serverTimestamp()
+  });
+  toast('✅ Đã xác nhận & giao tài xế', 'ok');
+}
+
+async function startTrip(id) {
+  await window._firebase.updateDoc(window._firebase.doc(window._db,'trips',id), {
+    status: 'onride', startedAt: window._firebase.serverTimestamp()
+  });
+  toast('🚗 Bắt đầu chuyến!', 'ok');
+}
+
+async function completeTrip(id) {
+  if (!confirm('Xác nhận hoàn thành chuyến?')) return;
+  await window._firebase.updateDoc(window._firebase.doc(window._db,'trips',id), {
+    status: 'completed', completedAt: window._firebase.serverTimestamp()
+  });
+  closeTP(); toast('✔ Hoàn thành chuyến!', 'ok');
+}
+
+async function cancelTrip(id) {
+  if (!confirm('Huỷ chuyến này?')) return;
+  await window._firebase.updateDoc(window._firebase.doc(window._db,'trips',id), {
+    status: 'cancelled', cancelledAt: window._firebase.serverTimestamp()
+  });
+  closeTP(); toast('Đã huỷ chuyến', 'ok');
+}
+
+function openCreateTripModal() {
+  openModal(`
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-title"><h3>➕ Tạo chuyến mới</h3>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="input-row">
+        <div class="field"><label>👤 Họ tên khách</label><input class="inp" id="ct-name" placeholder="Nguyễn Văn A"></div>
+        <div class="field"><label>📞 SĐT</label><input class="inp" id="ct-phone" placeholder="0912345678"></div>
+      </div>
+      <div class="field"><label>📍 Nơi đón</label><input class="inp" id="ct-pickup" placeholder="Địa chỉ đón..."></div>
+      <div class="field"><label>🏁 Điểm đến</label><input class="inp" id="ct-dropoff" placeholder="Địa chỉ đến..."></div>
+      <div class="input-row">
+        <div class="field"><label>Loại xe</label>
+          <select class="inp" id="ct-type"><option>Xe máy</option><option>Xe 4 chỗ</option><option>Xe 7 chỗ</option></select>
+        </div>
+        <div class="field"><label>Cước (đ)</label><input class="inp" id="ct-fare" type="number" placeholder="0"></div>
+      </div>
+      <div class="field"><label>Giao ngay cho nhân viên</label>
+        <select class="inp" id="ct-driver">
+          <option value="">— Chờ phân công sau —</option>
+          ${staffList.filter(s=>s.active!==false).map(s=>{
+            const nm=s.fullName||loginName(s.email);
+            return `<option value="${s.id}" data-name="${escapeHTML(nm)}">${escapeHTML(nm)}</option>`;
+          }).join('')}
+        </select>
+      </div>
+      <div class="field"><label>Ghi chú</label><input class="inp" id="ct-note" placeholder="Ghi chú..."></div>
+      <div class="modal-footer">
+        <button class="btn btn-outline btn-sm" onclick="closeModal()">Hủy</button>
+        <button class="btn btn-gold btn-sm" onclick="createTrip()">✅ Tạo</button>
+      </div>
+    </div>`);
+}
+
+async function createTrip() {
+  const name  = document.getElementById('ct-name').value.trim();
+  const phone = document.getElementById('ct-phone').value.trim();
+  const pick  = document.getElementById('ct-pickup').value.trim();
+  const drop  = document.getElementById('ct-dropoff').value.trim();
+  const type  = document.getElementById('ct-type').value;
+  const fare  = parseInt(document.getElementById('ct-fare').value)||null;
+  const note  = document.getElementById('ct-note').value.trim();
+  const sel   = document.getElementById('ct-driver');
+  const dId   = sel.value;
+  const dName = sel.value ? sel.options[sel.selectedIndex].dataset.name : '';
+  if (!name || !phone || !pick || !drop) return toast('Điền đầy đủ thông tin', 'err');
+  await window._firebase.addDoc(window._firebase.collection(window._db,'trips'), {
+    passengerName: name, passengerPhone: phone,
+    customerName: name, customerPhone: phone, customerId: 'admin',
+    pickup: pick, dropoff: drop, vehicleType: type, fare, note: note||'',
+    status: dId ? 'accepted' : 'pending',
+    driverId: dId||null, driverName: dName||null,
+    createdAt: window._firebase.serverTimestamp(),
+    acceptedAt: dId ? window._firebase.serverTimestamp() : null,
+    createdBy: 'admin'
+  });
+  closeModal(); toast('✅ Đã tạo chuyến!', 'ok');
+}
+
+// ════════════════════════
+//   5️⃣ LỊCH SỬ
+// ════════════════════════
+function renderHistory() {
+  document.getElementById('main').innerHTML = `
+    <div class="ph">
+      <div><h2 class="ph-title">Lịch sử</h2></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost btn-sm" onclick="loadHistory()">🔄 Làm mới</button>
+        ${isAdmin ? `<button class="btn btn-red btn-sm" onclick="confirmClearHistory()">🗑 Xoá lịch sử</button>` : ''}
+      </div>
+    </div>
+    <div class="filter-bar">
+      <div class="field" style="margin:0;flex:1;min-width:120px">
+        <label>Từ ngày</label><input class="inp" type="date" id="flt-from">
+      </div>
+      <div class="field" style="margin:0;flex:1;min-width:120px">
+        <label>Đến ngày</label><input class="inp" type="date" id="flt-to">
+      </div>
+      <div class="field" style="margin:0;flex:1;min-width:120px">
+        <label>Trạng thái</label>
+        <select class="inp" id="flt-status">
+          <option value="">Tất cả</option>
+          <option value="completed">Hoàn thành</option>
+          <option value="cancelled">Đã huỷ</option>
+        </select>
+      </div>
+      ${isAdmin ? `
+      <div class="field" style="margin:0;flex:1;min-width:140px">
+        <label>Nhân viên</label>
+        <select class="inp" id="flt-driver">
+          <option value="">Tất cả</option>
+          ${staffList.map(s=>`<option value="${s.id}">${escapeHTML(s.fullName||loginName(s.email))}</option>`).join('')}
+        </select>
+      </div>` : ''}
+      <button class="btn btn-gold btn-sm" onclick="loadHistory()">🔍 Lọc</button>
+      <button class="btn btn-ghost btn-sm" onclick="clearFilter()">✕ Xoá lọc</button>
+    </div>
+    <div id="hist-area"><div class="spinner"></div></div>`;
+  loadHistory();
+}
+
+async function loadHistory() {
+  const area = document.getElementById('hist-area');
+  if (!area) return;
+  area.innerHTML = '<div class="spinner"></div>';
+  try {
+    const { collection, getDocs, query, where } = window._firebase;
+    const snap = await getDocs(query(collection(window._db,'trips'), where('status','in',['completed','cancelled'])));
+    let trips  = snap.docs.map(d=>({id:d.id,...d.data()}));
+
+    const from     = document.getElementById('flt-from')?.value;
+    const to       = document.getElementById('flt-to')?.value;
+    const status   = document.getElementById('flt-status')?.value;
+    const driverId = document.getElementById('flt-driver')?.value;
+    if (from)     { const d=new Date(from); trips=trips.filter(t=>{ const at=t.createdAt?.toDate?t.createdAt.toDate():new Date(0); return at>=d; }); }
+    if (to)       { const d=new Date(to); d.setHours(23,59,59); trips=trips.filter(t=>{ const at=t.createdAt?.toDate?t.createdAt.toDate():new Date(0); return at<=d; }); }
+    if (status)   trips = trips.filter(t => t.status === status);
+    if (driverId) trips = trips.filter(t => t.driverId === driverId);
+    if (!isAdmin) trips = trips.filter(t => t.driverId === currentUser?.uid);
+    trips.sort((a,b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
+
+    if (!trips.length) { area.innerHTML='<div class="empty">Không có dữ liệu</div>'; return; }
+    const total = trips.filter(t=>t.status==='completed').reduce((s,t)=>s+(t.fare||0),0);
+    area.innerHTML = `
+      <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;font-size:13px">
+        <span>📊 <strong>${trips.length}</strong> chuyến</span>
+        <span>💰 Tổng thu: <strong style="color:var(--accent)">${fmtMoney(total)}</strong></span>
+      </div>
+      ${trips.map((t,idx) => {
+        const elId = 'h_'+idx;
+        const col  = t.status==='completed' ? 'var(--green)' : 'var(--red)';
+        return `<div class="hist-item" style="border-left:3px solid ${col}">
+          <div class="hist-head" onclick="toggleFolder('${elId}')">
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <span style="font-weight:700">👤 ${escapeHTML(t.passengerName||t.customerName||'—')}</span>
+                ${statusTag(t.status)}
+                ${t.fare ? `<span style="font-weight:700;color:var(--accent2)">${fmtMoney(t.fare)}</span>` : ''}
+              </div>
+              <div style="font-size:11px;color:var(--text3);margin-top:2px">${fmtDate(t.createdAt)}</div>
+            </div>
+            <span id="fa-${elId}" style="color:var(--text3);font-size:16px">▶</span>
+          </div>
+          <div class="hist-body" id="${elId}">
+            <div style="font-size:13px;margin-bottom:8px">
+              <div style="color:var(--green);margin-bottom:4px">📍 ${escapeHTML(t.pickup||'—')}</div>
+              <div style="color:var(--red)">🏁 ${escapeHTML(t.dropoff||'—')}</div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;color:var(--text2)">
+              <div>📞 ${escapeHTML(t.passengerPhone||t.customerPhone||'—')}</div>
+              <div>🚗 ${escapeHTML(t.vehicleType||'—')}</div>
+              <div>🧑 ${escapeHTML(t.driverName||'—')}</div>
+              <div>💰 ${t.fare ? fmtMoney(t.fare) : '—'}</div>
+            </div>
+            ${t.note ? `<div style="font-size:12px;color:var(--text3);margin-top:8px;padding:6px 8px;background:var(--surface3);border-radius:6px">💬 ${escapeHTML(t.note)}</div>` : ''}
+          </div>
+        </div>`;
+      }).join('')}`;
+  } catch(e) { area.innerHTML=`<div class="empty">Lỗi: ${e.message}</div>`; }
+}
+
+function toggleFolder(id) {
+  const body = document.getElementById(id);
+  const icon = document.getElementById('fa-'+id);
+  if (!body) return;
+  const open = body.classList.toggle('open');
+  if (icon) icon.textContent = open ? '▼' : '▶';
+}
+
+function clearFilter() {
+  ['flt-from','flt-to','flt-status','flt-driver'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  loadHistory();
+}
+
+async function confirmClearHistory() {
+  if (!confirm('XOÁ TOÀN BỘ lịch sử chuyến? Không thể hoàn tác!')) return;
+  if (!confirm('Xác nhận lần 2: Bạn thực sự muốn xoá tất cả?')) return;
+  toast('Đang xoá...', 'info');
+  const { collection, getDocs, query, where, doc, deleteDoc } = window._firebase;
+  const snap = await getDocs(query(collection(window._db,'trips'), where('status','in',['completed','cancelled'])));
+  await Promise.all(snap.docs.map(d => deleteDoc(doc(window._db,'trips',d.id))));
+  toast('Đã xoá lịch sử', 'ok'); loadHistory();
+}
+
+// ════════════════════════
+//   6️⃣ CÀI ĐẶT
+// ════════════════════════
+function renderSettings() {
+  document.getElementById('main').innerHTML = `
+    <div class="ph"><div><h2 class="ph-title">Cài đặt</h2></div></div>
+    <div class="card" style="max-width:500px">
+      <div class="card-title">⚙️ Cài đặt ứng dụng</div>
+      <div class="field"><label>Tên ứng dụng</label><input class="inp" id="cfg-name" value="${escapeHTML(appConfig.name||'GrapApp')}"></div>
+      <div class="field"><label>Địa chỉ / Mô tả</label><input class="inp" id="cfg-addr" value="${escapeHTML(appConfig.address||'')}"></div>
+      <div class="field"><label>SĐT liên hệ</label><input class="inp" id="cfg-phone" value="${escapeHTML(appConfig.phone||'')}"></div>
       <div class="input-row">
         <div class="field"><label>Cước cơ bản (đ)</label><input class="inp" id="cfg-base" type="number" value="${appConfig.fareBase||10000}"></div>
         <div class="field"><label>Cước / km (đ)</label><input class="inp" id="cfg-km" type="number" value="${appConfig.farePerKm||8000}"></div>
       </div>
-      <div class="field"><label>Domain tài xế</label><input class="inp" value="${DRIVER_DOMAIN}" readonly style="opacity:.5"></div>
-      <div class="field"><label>Admin email</label><input class="inp" value="${ADMIN_EMAIL}" readonly style="opacity:.5"></div>
+      <div class="field"><label>Domain nhân viên</label><input class="inp" value="${DOMAIN}" readonly style="opacity:.5"></div>
+      <div class="field"><label>Email admin</label><input class="inp" value="${ADMIN_EMAIL}" readonly style="opacity:.5"></div>
       <button class="btn btn-gold" onclick="saveSettings()">💾 Lưu cài đặt</button>
     </div>`;
 }
 
-async function saveSettings(){
-  const name     = $('cfg-name').value.trim()||'GrapApp';
-  const fareBase = parseInt($('cfg-base').value)||10000;
-  const farePerKm= parseInt($('cfg-km').value)||8000;
-  await window._firebase.setDoc(window._firebase.doc(window._db,'config','app'),{name,fareBase,farePerKm});
-  appConfig = {name,fareBase,farePerKm};
-  toast('Đã lưu cài đặt','ok');
+async function saveSettings() {
+  const cfg = {
+    name:      document.getElementById('cfg-name').value.trim()||'GrapApp',
+    address:   document.getElementById('cfg-addr').value.trim(),
+    phone:     document.getElementById('cfg-phone').value.trim(),
+    fareBase:  parseInt(document.getElementById('cfg-base').value)||10000,
+    farePerKm: parseInt(document.getElementById('cfg-km').value)||8000,
+  };
+  await window._firebase.setDoc(window._firebase.doc(window._db,'config','app'), cfg);
+  Object.assign(appConfig, cfg);
+  document.getElementById('sb-sub').textContent = cfg.address || 'Quản lý đặt xe';
+  toast('✅ Đã lưu cài đặt', 'ok');
 }
 
-// ════════════════════════════════════════
-//   DRIVER APP
-// ════════════════════════════════════════
-function showDriverApp(){
-  hideAll();
-  $('app-driver').style.display='block';
-  driverPage('home');
-}
-
-function driverPage(page){
-  ['home','history','profile'].forEach(p=>{
-    const el=$('dtab-'+p); if(el) el.classList.toggle('active',p===page);
-  });
-  // Dọn listener cũ khi đổi trang
-  if(unsubPending){ unsubPending(); unsubPending=null; }
-  if(unsubActive) { unsubActive();  unsubActive=null;  }
-  switch(page){
-    case 'home':    renderDriverHome();    break;
-    case 'history': renderDriverHistory(); break;
-    case 'profile': renderDriverProfile(); break;
-  }
-}
-
-function renderDriverHome(){
-  const p = currentProfile;
-  driverOnline = p?.online||false;
-  $('driver-main').innerHTML=`
-    <div class="ph"><div>
-      <div class="ph-title">Xin chào, ${p?.fullName||'Tài xế'}!</div>
-      <div class="ph-sub">${p?.vehicle||'—'} ${p?.licensePlate?'· '+p.licensePlate:''}</div>
-    </div></div>
-
-    <div class="online-toggle">
-      <div class="toggle-dot ${driverOnline?'on':''}" id="dot-online"></div>
-      <div style="flex:1">
-        <div style="font-weight:600" id="online-label">${driverOnline?'Đang Online':'Đang Offline'}</div>
-        <div style="font-size:11px;color:var(--text3)" id="online-sub">${driverOnline?'Có thể nhận chuyến':'Bật để nhận chuyến mới'}</div>
-      </div>
-      <button class="btn ${driverOnline?'btn-outline':'btn-green'}" id="btn-online" onclick="toggleOnline()">
-        ${driverOnline?'Đi offline':'Bật online'}
-      </button>
+// ════════════════════════
+//   GUEST (Khách đặt xe)
+// ════════════════════════
+function renderGuestPage() {
+  document.getElementById('guest-body').innerHTML = `
+    <div style="margin-bottom:20px">
+      <h2 style="font-size:20px;color:var(--cream);margin-bottom:4px">Đặt xe</h2>
+      <div style="font-size:12px;color:var(--text3)">Điền thông tin để đặt chuyến</div>
     </div>
-
-    <div class="card">
-      <div class="card-title">🚗 Chuyến đang thực hiện</div>
-      <div id="d-active-trip"><div class="empty">Không có chuyến nào</div></div>
-    </div>
-
-    <div class="card">
-      <div class="card-title" id="d-pending-title">⏳ Chuyến đang chờ <span class="badge" id="d-pending-badge" style="display:none">0</span></div>
-      <div id="d-pending-list"><div class="empty">Đang tải...</div></div>
-    </div>`;
-
-  listenDriverActiveTrip();
-  listenPendingTrips();
-}
-
-function listenDriverActiveTrip(){
-  const { collection, query, where, onSnapshot } = window._firebase;
-  const q = query(collection(window._db,'trips'), where('driverId','==',currentProfile.id), where('status','in',['accepted','onride']));
-  unsubActive = onSnapshot(q, snap=>{
-    const el=$('d-active-trip'); if(!el) return;
-    if(snap.empty){ el.innerHTML='<div class="empty">Không có chuyến nào</div>'; return; }
-    const t = { id:snap.docs[0].id, ...snap.docs[0].data() };
-    el.innerHTML=`
-      <div class="trip-card" style="border-left:3px solid var(--green)">
-        <div class="trip-card-head"><span style="font-weight:700">👤 ${t.customerName}</span>${statusTag(t.status)}</div>
-        <div class="trip-route">
-          <div>📍 <span class="from">${t.pickup}</span></div>
-          <div>🏁 <span class="to">${t.dropoff}</span></div>
-        </div>
-        <div class="trip-meta">📞 ${t.customerPhone||'—'} · 💰 ${t.fare?fmtMoney(t.fare):'Tính sau'}</div>
-        <div style="display:flex;gap:8px;margin-top:10px">
-          ${t.status==='accepted'?`<button class="btn btn-gold btn-sm btn-full" onclick="startTrip('${t.id}')">🚗 Bắt đầu chạy</button>`:''}
-          ${t.status==='onride'  ?`<button class="btn btn-green btn-sm btn-full" onclick="completeTrip('${t.id}')">✔ Hoàn thành</button>`:''}
-          <button class="btn btn-red btn-sm" onclick="driverCancelTrip('${t.id}')">Huỷ</button>
-        </div>
-      </div>`;
-  });
-}
-
-function listenPendingTrips(){
-  const { collection, query, where, onSnapshot } = window._firebase;
-  const q = query(collection(window._db,'trips'), where('status','==','pending'));
-  unsubPending = onSnapshot(q, snap=>{
-    const el=$('d-pending-list'), badge=$('d-pending-badge'); if(!el) return;
-    const trips = snap.docs.map(d=>({id:d.id,...d.data()}));
-    if(badge){ badge.textContent=trips.length; badge.style.display=trips.length?'inline-flex':'none'; }
-    if(!trips.length){ el.innerHTML='<div class="empty">Không có chuyến chờ</div>'; return; }
-    el.innerHTML=trips.map(t=>`
-      <div class="trip-card" style="border-left:3px solid var(--orange)">
-        <div class="trip-card-head"><span style="font-weight:700">👤 ${t.customerName}</span>${statusTag(t.status)}</div>
-        <div class="trip-route">
-          <div>📍 <span class="from">${t.pickup}</span></div>
-          <div>🏁 <span class="to">${t.dropoff}</span></div>
-        </div>
-        <div class="trip-meta">
-          🚗 ${t.vehicleType||'—'} · 💰 ${t.fare?fmtMoney(t.fare):'Tính sau'} · 🕒 ${fmtDate(t.createdAt)}
-        </div>
-        ${driverOnline?`
-          <div style="display:flex;gap:8px;margin-top:10px">
-            <button class="btn btn-green btn-sm btn-full" onclick="acceptTrip('${t.id}')">✅ Nhận chuyến</button>
-          </div>`:`<div style="margin-top:8px;font-size:12px;color:var(--text3)">Bật online để nhận chuyến</div>`}
-      </div>`).join('');
-  });
-}
-
-async function toggleOnline(){
-  driverOnline = !driverOnline;
-  await window._firebase.updateDoc(window._firebase.doc(window._db,'drivers',currentProfile.id),{online:driverOnline});
-  currentProfile.online = driverOnline;
-  const dot=$('dot-online'), btn=$('btn-online'), lbl=$('online-label'), sub=$('online-sub');
-  if(dot){ dot.classList.toggle('on',driverOnline); }
-  if(btn){ btn.textContent=driverOnline?'Đi offline':'Bật online'; btn.className=`btn ${driverOnline?'btn-outline':'btn-green'}`; }
-  if(lbl) lbl.textContent=driverOnline?'Đang Online':'Đang Offline';
-  if(sub) sub.textContent=driverOnline?'Có thể nhận chuyến':'Bật để nhận chuyến mới';
-  toast(driverOnline?'🟢 Bạn đang online':'⚫ Đã offline','info');
-  listenPendingTrips();
-}
-
-async function acceptTrip(tripId){
-  if(!driverOnline) return toast('Bật online trước','err');
-  try{
-    await window._firebase.updateDoc(window._firebase.doc(window._db,'trips',tripId),{
-      status:'accepted', driverId:currentProfile.id, driverName:currentProfile.fullName,
-      driverPhone:currentProfile.phone||'', acceptedAt:window._firebase.serverTimestamp()
-    });
-    toast('✅ Đã nhận chuyến!','ok');
-  } catch(e){ toast('Lỗi: '+e.message,'err'); }
-}
-
-async function startTrip(id){
-  await window._firebase.updateDoc(window._firebase.doc(window._db,'trips',id),{status:'onride',startedAt:window._firebase.serverTimestamp()});
-  toast('🚗 Bắt đầu chạy!','ok');
-}
-
-async function completeTrip(id){
-  if(!confirm('Xác nhận hoàn thành chuyến?')) return;
-  await window._firebase.updateDoc(window._firebase.doc(window._db,'trips',id),{status:'completed',completedAt:window._firebase.serverTimestamp()});
-  toast('✔ Hoàn thành chuyến!','ok');
-}
-
-async function driverCancelTrip(id){
-  if(!confirm('Huỷ chuyến này?')) return;
-  await window._firebase.updateDoc(window._firebase.doc(window._db,'trips',id),{status:'cancelled',cancelledAt:window._firebase.serverTimestamp()});
-  toast('Đã huỷ chuyến','ok');
-}
-
-async function renderDriverHistory(){
-  $('driver-main').innerHTML='<div class="spinner"></div>';
-  try{
-    const { collection, query, where, getDocs } = window._firebase;
-    const q    = query(collection(window._db,'trips'), where('driverId','==',currentProfile.id));
-    const snap = await getDocs(q);
-    const list = snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
-    const earned = list.filter(t=>t.status==='completed').reduce((s,t)=>s+(t.fare||0),0);
-    $('driver-main').innerHTML=`
-      <div class="ph"><div><div class="ph-title">Lịch sử chuyến</div><div class="ph-sub">${list.length} chuyến · Đã kiếm: <span style="color:var(--accent)">${fmtMoney(earned)}</span></div></div></div>
-      ${list.map(t=>`
-        <div class="trip-card" style="border-left:3px solid ${t.status==='completed'?'var(--green)':t.status==='cancelled'?'var(--red)':'var(--accent)'}">
-          <div class="trip-card-head"><span style="font-size:12px;color:var(--text3)">${fmtDate(t.createdAt)}</span>${statusTag(t.status)}</div>
-          <div class="trip-route"><div>📍 <span class="from">${t.pickup}</span></div><div>🏁 <span class="to">${t.dropoff}</span></div></div>
-          <div class="trip-meta">👤 ${t.customerName||'—'} · 💰 ${t.fare?fmtMoney(t.fare):'—'}</div>
-        </div>`).join('')||'<div class="empty">Chưa có chuyến nào</div>'}`;
-  } catch(e){ $('driver-main').innerHTML=`<div class="empty">Lỗi: ${e.message}</div>`; }
-}
-
-function renderDriverProfile(){
-  const p=currentProfile;
-  $('driver-main').innerHTML=`
-    <div class="ph"><div><div class="ph-title">Hồ sơ tài xế</div></div></div>
-    <div class="card" style="max-width:460px">
-      <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px">
-        <div class="avatar" style="width:50px;height:50px;font-size:20px">${(p?.fullName||'T')[0].toUpperCase()}</div>
-        <div><div style="font-size:18px;font-weight:700;color:var(--cream)">${p?.fullName||'—'}</div>
-             <div style="font-size:12px;color:var(--text3)">${p?.email||''}</div></div>
-      </div>
-      <div class="divider"></div>
-      <div style="display:grid;gap:10px;margin:14px 0;font-size:13px">
-        <div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">SĐT</span><span>${p?.phone||'—'}</span></div>
-        <div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">Loại xe</span><span>${p?.vehicle||'—'}</span></div>
-        <div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">Biển số</span><span>${p?.licensePlate||'—'}</span></div>
-        <div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">Trạng thái</span><span>${p?.online?'<span class="tag tag-green">Online</span>':'<span class="tag tag-gray">Offline</span>'}</span></div>
-      </div>
-      <div class="divider"></div>
-      <div style="margin-top:14px">
-        <div style="font-size:13px;font-weight:600;color:var(--cream);margin-bottom:10px">Đổi mật khẩu</div>
-        <div class="field"><label>Mật khẩu mới</label><input class="inp" id="dpw" type="password" placeholder="Tối thiểu 6 ký tự"></div>
-        <button class="btn btn-gold btn-sm" onclick="changeDriverPw()">Đổi mật khẩu</button>
-      </div>
-    </div>`;
-}
-
-async function changeDriverPw(){
-  const pw=$('dpw').value;
-  if(!pw||pw.length<6) return toast('Tối thiểu 6 ký tự','err');
-  try{ await window._firebase.updatePassword(window._auth.currentUser,pw); toast('Đã đổi mật khẩu','ok'); $('dpw').value=''; }
-  catch(e){ toast('Lỗi: '+e.message,'err'); }
-}
-
-// ════════════════════════════════════════
-//   CUSTOMER APP
-// ════════════════════════════════════════
-function showCustomerApp(){
-  hideAll();
-  $('app-customer').style.display='block';
-  customerPage('book');
-}
-
-function customerPage(page){
-  const map={book:'ctab-book',trips:'ctab-trips',profile:'ctab-profile'};
-  Object.entries(map).forEach(([p,id])=>{ const el=$(id); if(el) el.classList.toggle('active',p===page); });
-  if(unsubCurrent){ unsubCurrent(); unsubCurrent=null; }
-  switch(page){
-    case 'book':    renderCustomerBook();    break;
-    case 'trips':   renderCustomerTrips();   break;
-    case 'profile': renderCustomerProfile(); break;
-  }
-}
-
-function renderCustomerBook(){
-  const p = currentProfile;
-  $('customer-main').innerHTML=`
-    <div class="ph"><div><div class="ph-title">Đặt xe</div><div class="ph-sub">Xin chào, ${p?.fullName||'Khách'}!</div></div></div>
-    <div id="c-current-trip"></div>
-    <div class="card" id="c-book-form">
-      <div class="card-title">🚗 Đặt chuyến mới</div>
+    <div id="g-current"></div>
+    <div class="card" id="g-form">
       <div class="input-row">
-        <div class="field"><label>👤 Họ tên</label><input class="inp" id="bk-name" value="${p?.fullName||''}" placeholder="Nguyễn Văn A"></div>
-        <div class="field"><label>📞 Số điện thoại</label><input class="inp" id="bk-phone" value="${p?.phone||''}" placeholder="0912345678"></div>
+        <div class="field"><label>👤 Họ tên</label><input class="inp" id="g-name" placeholder="Nguyễn Văn A"></div>
+        <div class="field"><label>📞 SĐT</label><input class="inp" id="g-phone" placeholder="0912345678"></div>
       </div>
-      <div class="field"><label>📍 Nơi đón</label><input class="inp" id="bk-pickup" value="${p?.lastPickup||''}" placeholder="Số nhà, tên đường, phường/xã..."></div>
-      <div class="field"><label>🏁 Điểm đến</label><input class="inp" id="bk-dropoff" placeholder="Nhập địa chỉ đến..."></div>
+      <div class="field"><label>📍 Nơi đón</label><input class="inp" id="g-pickup" placeholder="Số nhà, tên đường..."></div>
+      <div class="field"><label>🏁 Điểm đến</label><input class="inp" id="g-dropoff" placeholder="Nhập điểm đến..."></div>
       <div class="input-row">
         <div class="field"><label>Loại xe</label>
-          <select class="inp" id="bk-type" onchange="updateFare()">
-            <option value="Xe máy">🛵 Xe máy</option>
-            <option value="Xe 4 chỗ">🚗 Xe 4 chỗ</option>
-            <option value="Xe 7 chỗ">🚙 Xe 7 chỗ</option>
-          </select>
+          <select class="inp" id="g-type" onchange="gUpdateFare()"><option>Xe máy</option><option>Xe 4 chỗ</option><option>Xe 7 chỗ</option></select>
         </div>
         <div class="field"><label>Khoảng cách (km)</label>
-          <input class="inp" id="bk-dist" type="number" min="0.1" step="0.5" placeholder="vd: 3.5" oninput="updateFare()">
+          <input class="inp" id="g-dist" type="number" min="0.1" step="0.5" placeholder="vd: 3.5" oninput="gUpdateFare()">
         </div>
       </div>
-      <div id="fare-preview" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:14px">
+      <div id="g-fare-preview" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:14px">
         <div style="display:flex;justify-content:space-between;align-items:center">
           <span style="font-size:13px;color:var(--text2)">Cước ước tính</span>
-          <span style="font-size:20px;font-weight:700;color:var(--accent2)" id="fare-amt">—</span>
+          <span style="font-size:20px;font-weight:700;color:var(--accent2)" id="g-fare-amt">—</span>
         </div>
-        <div style="font-size:11px;color:var(--text3);margin-top:3px">Cước cơ bản ${fmtMoney(appConfig.fareBase)} + ${fmtMoney(appConfig.farePerKm)}/km</div>
       </div>
-      <div class="field"><label>Ghi chú (tuỳ chọn)</label><input class="inp" id="bk-note" placeholder="Ghi chú cho tài xế..."></div>
-      <button class="btn btn-gold btn-full" onclick="bookRide()">🚗 Đặt xe ngay</button>
+      <div class="field"><label>Ghi chú</label><input class="inp" id="g-note" placeholder="Ghi chú cho tài xế..."></div>
+      <button class="btn btn-gold btn-full" onclick="gBookRide()">🚗 Đặt xe ngay</button>
     </div>`;
-
-  listenCurrentCustomerTrip();
 }
 
-function updateFare(){
-  const dist=parseFloat($('bk-dist')?.value)||0;
-  const type=$('bk-type')?.value||'Xe máy';
-  const mult=type==='Xe máy'?1:type==='Xe 4 chỗ'?1.5:2;
-  if(dist>0){
-    const fare=Math.round((appConfig.fareBase + appConfig.farePerKm*dist)*mult);
-    $('fare-preview').style.display='block';
-    $('fare-amt').textContent=fmtMoney(fare);
-  } else { $('fare-preview').style.display='none'; }
+function gUpdateFare() {
+  const dist = parseFloat(document.getElementById('g-dist')?.value)||0;
+  const type = document.getElementById('g-type')?.value||'Xe máy';
+  const mult = type==='Xe máy'?1:type==='Xe 4 chỗ'?1.5:2;
+  const prev = document.getElementById('g-fare-preview');
+  if (dist > 0 && prev) {
+    const fare = Math.round(((appConfig.fareBase||10000)+(appConfig.farePerKm||8000)*dist)*mult);
+    prev.style.display='block';
+    document.getElementById('g-fare-amt').textContent = fmtMoney(fare);
+  } else if (prev) prev.style.display='none';
 }
 
-function listenCurrentCustomerTrip(){
-  const { collection, query, where, onSnapshot } = window._firebase;
-  const q = query(collection(window._db,'trips'), where('customerId','==',currentProfile.id), where('status','in',['pending','accepted','onride']));
-  unsubCurrent = onSnapshot(q, snap=>{
-    const wrap=$('c-current-trip'), form=$('c-book-form'); if(!wrap) return;
-    if(snap.empty){ wrap.innerHTML=''; if(form) form.style.display='block'; return; }
-    if(form) form.style.display='none';
-    const t = {id:snap.docs[0].id,...snap.docs[0].data()};
-    const colMap={pending:'var(--orange)',accepted:'var(--blue)',onride:'var(--green)'};
-    const msgMap={
-      pending: '⏳ Đang chờ nhân viên xác nhận...',
-      accepted:'✅ Tài xế đang đến đón bạn!',
-      onride:  '🚗 Bạn đang trên xe!'
-    };
-    // Nút huỷ: pending → huỷ tự do | accepted/onride → cần nhập SĐT
-    const cancelBtn = (t.status==='pending')
-      ? `<button class="btn btn-outline btn-sm btn-full" onclick="customerCancelFree('${t.id}')">Huỷ chuyến</button>`
-      : `<button class="btn btn-red btn-sm btn-full" onclick="openCancelVerify('${t.id}','${t.customerPhone||''}')">🔒 Yêu cầu huỷ chuyến</button>`;
+let gUnsub = null;
+async function gBookRide() {
+  const name   = document.getElementById('g-name').value.trim();
+  const phone  = document.getElementById('g-phone').value.trim();
+  const pickup = document.getElementById('g-pickup').value.trim();
+  const drop   = document.getElementById('g-dropoff').value.trim();
+  const type   = document.getElementById('g-type').value;
+  const dist   = parseFloat(document.getElementById('g-dist').value)||0;
+  const note   = document.getElementById('g-note').value.trim();
+  if (!name)          return toast('Nhập họ tên', 'err');
+  if (!phone)         return toast('Nhập số điện thoại', 'err');
+  if (!pickup||!drop) return toast('Nhập điểm đón và điểm đến', 'err');
+  const mult = type==='Xe máy'?1:type==='Xe 4 chỗ'?1.5:2;
+  const fare = dist>0 ? Math.round(((appConfig.fareBase||10000)+(appConfig.farePerKm||8000)*dist)*mult) : null;
+  const ref = await window._firebase.addDoc(window._firebase.collection(window._db,'trips'), {
+    passengerName: name, passengerPhone: phone,
+    customerName: name, customerPhone: phone, customerId: 'guest_'+Date.now(),
+    pickup, dropoff: drop, vehicleType: type,
+    distance: dist||null, fare, note: note||'',
+    status: 'pending', createdAt: window._firebase.serverTimestamp(),
+    driverId: null, driverName: null
+  });
+  toast('🎉 Đặt xe thành công! Đang chờ xác nhận...', 'ok');
+  document.getElementById('g-form').style.display = 'none';
+  gListenTrip(ref.id, phone);
+}
 
-    wrap.innerHTML=`
-      <div class="card" style="border:2px solid ${colMap[t.status]||'var(--border)'}">
-        <div style="text-align:center;padding:8px 0 14px">
-          <div style="font-size:20px;margin-bottom:6px">${msgMap[t.status]||''}</div>
+function gListenTrip(id, phone) {
+  if (gUnsub) { gUnsub(); gUnsub = null; }
+  gUnsub = window._firebase.onSnapshot(window._firebase.doc(window._db,'trips',id), snap => {
+    if (!snap.exists()) return;
+    const t   = { id: snap.id, ...snap.data() };
+    const col = { pending:'var(--orange)', accepted:'var(--blue)', onride:'var(--green)', completed:'var(--green)', cancelled:'var(--red)' };
+    const msg = { pending:'⏳ Đang chờ xác nhận...', accepted:'✅ Tài xế đang đến đón!', onride:'🚗 Bạn đang trên xe!', completed:'✔ Hoàn thành!', cancelled:'✕ Chuyến đã bị huỷ' };
+    const cur = document.getElementById('g-current');
+    if (!cur) return;
+    const canCancel = (t.status==='accepted' || t.status==='onride');
+    cur.innerHTML = `
+      <div class="card" style="border:2px solid ${col[t.status]||'var(--border)'}">
+        <div style="text-align:center;padding:8px 0 12px">
+          <div style="font-size:20px;margin-bottom:6px">${msg[t.status]||''}</div>
           ${statusTag(t.status)}
         </div>
-
-        <div style="background:var(--surface2);border-radius:8px;padding:10px;margin-bottom:10px;font-size:13px">
-          <div style="display:flex;justify-content:space-between;margin-bottom:5px">
-            <span style="color:var(--text3)">👤 Tên</span><span style="font-weight:600">${t.passengerName||t.customerName||'—'}</span>
-          </div>
-          <div style="display:flex;justify-content:space-between">
-            <span style="color:var(--text3)">📞 SĐT</span><span>${t.passengerPhone||t.customerPhone||'—'}</span>
-          </div>
+        <div style="font-size:13px;margin-bottom:10px">
+          <div style="color:var(--green);margin-bottom:4px">📍 ${escapeHTML(t.pickup||'')}</div>
+          <div style="color:var(--red)">🏁 ${escapeHTML(t.dropoff||'')}</div>
         </div>
-
-        <div class="trip-route" style="margin-bottom:10px">
-          <div>📍 <span class="from">${t.pickup}</span></div>
-          <div>🏁 <span class="to">${t.dropoff}</span></div>
-        </div>
-
-        ${t.driverName?`
-          <div style="background:var(--surface3);border-radius:8px;padding:10px;margin-bottom:10px;font-size:13px">
-            <div style="font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.6px">Tài xế</div>
-            <div style="font-weight:600;color:var(--cream)">🧑 ${t.driverName}</div>
-            ${t.driverPhone?`<div style="color:var(--text3);margin-top:3px">📞 ${t.driverPhone}</div>`:''}
-          </div>`:''}
-
-        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:12px;padding:8px 0;border-top:1px solid var(--border)">
+        ${t.driverName ? `<div style="background:var(--surface2);border-radius:8px;padding:10px;margin-bottom:10px;font-size:13px">
+          <div style="font-weight:600;color:var(--cream)">🧑 ${escapeHTML(t.driverName)}</div>
+        </div>` : ''}
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:10px">
           <span style="color:var(--text3)">Cước</span>
-          <span style="color:var(--accent);font-weight:700">${t.fare?fmtMoney(t.fare):'Tính sau'}</span>
+          <span style="color:var(--accent);font-weight:700">${t.fare ? fmtMoney(t.fare) : 'Tính sau'}</span>
         </div>
-
-        ${cancelBtn}
-        ${(t.status==='accepted'||t.status==='onride')?`
-          <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:6px">
-            ⚠️ Chuyến đã được xác nhận — cần nhập SĐT để huỷ
-          </div>`:``}
+        ${t.status==='pending'
+          ? `<button class="btn btn-outline btn-sm btn-full" onclick="gCancelFree('${t.id}')">Huỷ chuyến</button>`
+          : canCancel
+            ? `<button class="btn btn-red btn-sm btn-full" onclick="gOpenCancelVerify('${t.id}','${phone}')">🔒 Yêu cầu huỷ</button>
+               <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:6px">⚠️ Chuyến đã xác nhận — cần nhập SĐT để huỷ</div>`
+            : t.status==='completed'||t.status==='cancelled'
+              ? `<button class="btn btn-gold btn-full btn-sm" onclick="gNewTrip()">🚗 Đặt chuyến mới</button>` : ''}
       </div>`;
+    if (t.status==='completed' || t.status==='cancelled') { if(gUnsub){gUnsub();gUnsub=null;} }
   });
 }
 
-async function bookRide(){
-  const name    = $('bk-name').value.trim();
-  const phone   = $('bk-phone').value.trim();
-  const pickup  = $('bk-pickup').value.trim();
-  const dropoff = $('bk-dropoff').value.trim();
-  const type    = $('bk-type').value;
-  const dist    = parseFloat($('bk-dist').value)||0;
-  const note    = $('bk-note').value.trim();
-  if(!name)            return toast('Nhập họ tên','err');
-  if(!phone)           return toast('Nhập số điện thoại','err');
-  if(!pickup||!dropoff)return toast('Nhập điểm đón và điểm đến','err');
-  const mult=type==='Xe máy'?1:type==='Xe 4 chỗ'?1.5:2;
-  const fare=dist>0?Math.round((appConfig.fareBase+appConfig.farePerKm*dist)*mult):null;
-  try{
-    await window._firebase.addDoc(window._firebase.collection(window._db,'trips'),{
-      customerId:    currentProfile.id,
-      customerName:  currentProfile.fullName,
-      customerPhone: currentProfile.phone||'',
-      passengerName: name,
-      passengerPhone:phone,
-      pickup, dropoff, vehicleType:type,
-      distance:dist||null, fare, note:note||'',
-      status:'pending',
-      createdAt:window._firebase.serverTimestamp(),
-      driverId:null, driverName:null, driverPhone:null
-    });
-    // Lưu nơi đón cuối để điền lại lần sau
-    await window._firebase.updateDoc(window._firebase.doc(window._db,'customers',currentProfile.id),{lastPickup:pickup});
-    toast('🎉 Đặt xe thành công! Đang chờ xác nhận...','ok');
-  } catch(e){ toast('Lỗi: '+e.message,'err'); }
+async function gCancelFree(id) {
+  if (!confirm('Huỷ chuyến?')) return;
+  await window._firebase.updateDoc(window._firebase.doc(window._db,'trips',id), { status:'cancelled' });
+  toast('Đã huỷ chuyến', 'ok');
 }
 
-// Huỷ tự do khi còn pending (chưa có tài xế nhận)
-async function customerCancelFree(id){
-  if(!confirm('Huỷ chuyến này?')) return;
-  await window._firebase.updateDoc(window._firebase.doc(window._db,'trips',id),{status:'cancelled'});
-  toast('Đã huỷ chuyến','ok');
-}
-
-// Huỷ khi đã được xác nhận → cần nhập đúng SĐT
-function openCancelVerify(tripId, correctPhone){
-  document.body.insertAdjacentHTML('beforeend',`
-    <div class="modal-overlay" id="cancel-modal" onclick="if(event.target.id==='cancel-modal')closeModal('cancel-modal')">
-      <div class="modal" style="max-width:360px">
-        <div class="modal-title">🔒 Xác nhận huỷ chuyến<button class="modal-close" onclick="closeModal('cancel-modal')">✕</button></div>
-        <div style="font-size:13px;color:var(--text2);margin-bottom:16px">
-          Chuyến đã được tài xế xác nhận.<br>Nhập lại <strong>số điện thoại</strong> đã đặt để huỷ.
-        </div>
-        <div class="field">
-          <label>Số điện thoại đặt xe</label>
-          <input class="inp" id="cancel-phone" type="tel" placeholder="Nhập SĐT..." onkeydown="if(event.key==='Enter')doVerifyCancel('${tripId}','${correctPhone}')">
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-ghost" onclick="closeModal('cancel-modal')">Đóng</button>
-          <button class="btn btn-red" onclick="doVerifyCancel('${tripId}','${correctPhone}')">Xác nhận huỷ</button>
-        </div>
+function gOpenCancelVerify(tripId, correctPhone) {
+  openModal(`
+    <div class="modal" style="max-width:360px" onclick="event.stopPropagation()">
+      <div class="modal-title">🔒 Xác nhận huỷ<button class="modal-close" onclick="closeModal()">✕</button></div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:16px">Nhập lại <strong>số điện thoại</strong> đã đặt để xác nhận huỷ.</div>
+      <div class="field"><label>Số điện thoại</label>
+        <input class="inp" id="g-cancel-phone" type="tel" placeholder="Nhập SĐT...">
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost btn-sm" onclick="closeModal()">Đóng</button>
+        <button class="btn btn-red btn-sm" onclick="gDoVerifyCancel('${tripId}','${correctPhone}')">Xác nhận huỷ</button>
       </div>
     </div>`);
-  setTimeout(()=>{ const el=$('cancel-phone'); if(el) el.focus(); }, 100);
 }
 
-async function doVerifyCancel(tripId, correctPhone){
-  const entered = $('cancel-phone').value.trim();
-  if(!entered) return toast('Nhập số điện thoại','err');
-  // So sánh bỏ dấu cách và ký tự đặc biệt
-  const clean = s => s.replace(/[\s\-\+\.]/g,'');
-  if(clean(entered) !== clean(correctPhone)){
-    toast('❌ Số điện thoại không khớp!','err'); return;
-  }
-  await window._firebase.updateDoc(window._firebase.doc(window._db,'trips',tripId),{
-    status:'cancelled', cancelledAt:window._firebase.serverTimestamp(), cancelReason:'Khách huỷ sau xác nhận'
+async function gDoVerifyCancel(id, correct) {
+  const entered = document.getElementById('g-cancel-phone').value.trim();
+  const clean   = s => s.replace(/[\s\-\+\.]/g,'');
+  if (clean(entered) !== clean(correct)) { toast('❌ Số điện thoại không khớp!', 'err'); return; }
+  await window._firebase.updateDoc(window._firebase.doc(window._db,'trips',id), {
+    status:'cancelled', cancelledAt: window._firebase.serverTimestamp()
   });
-  closeModal('cancel-modal');
-  toast('Đã huỷ chuyến','ok');
+  closeModal(); toast('Đã huỷ chuyến', 'ok');
 }
 
-async function renderCustomerTrips(){
-  $('customer-main').innerHTML='<div class="spinner"></div>';
-  try{
-    const { collection, query, where, getDocs } = window._firebase;
-    const q    = query(collection(window._db,'trips'), where('customerId','==',currentProfile.id));
-    const snap = await getDocs(q);
-    const list = snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
-    $('customer-main').innerHTML=`
-      <div class="ph"><div><div class="ph-title">Chuyến của tôi</div><div class="ph-sub">${list.length} chuyến</div></div></div>
-      ${list.map(t=>`
-        <div class="trip-card" style="border-left:3px solid ${t.status==='completed'?'var(--green)':t.status==='cancelled'?'var(--red)':t.status==='onride'?'var(--accent)':'var(--orange)'}">
-          <div class="trip-card-head"><span style="font-size:12px;color:var(--text3)">${fmtDate(t.createdAt)}</span>${statusTag(t.status)}</div>
-          <div class="trip-route"><div>📍 <span class="from">${t.pickup}</span></div><div>🏁 <span class="to">${t.dropoff}</span></div></div>
-          <div class="trip-meta">🚗 ${t.vehicleType||'—'} · 💰 ${t.fare?fmtMoney(t.fare):'—'} · 🧑 ${t.driverName||'Chưa có tài xế'}</div>
-        </div>`).join('')||'<div class="empty">Chưa có chuyến nào</div>'}`;
-  } catch(e){ $('customer-main').innerHTML=`<div class="empty">Lỗi: ${e.message}</div>`; }
-}
-
-function renderCustomerProfile(){
-  const p=currentProfile;
-  $('customer-main').innerHTML=`
-    <div class="ph"><div><div class="ph-title">Hồ sơ</div></div></div>
-    <div class="card" style="max-width:460px">
-      <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px">
-        <div class="avatar" style="width:50px;height:50px;font-size:20px">${(p?.fullName||'K')[0].toUpperCase()}</div>
-        <div><div style="font-size:18px;font-weight:700;color:var(--cream)">${p?.fullName||'—'}</div>
-             <div style="font-size:12px;color:var(--text3)">${p?.email||''}</div></div>
-      </div>
-      <div class="divider"></div>
-      <div style="display:grid;gap:10px;margin:14px 0;font-size:13px">
-        <div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">SĐT</span><span>${p?.phone||'—'}</span></div>
-      </div>
-      <div class="divider"></div>
-      <div style="margin-top:14px">
-        <div style="font-size:13px;font-weight:600;color:var(--cream);margin-bottom:10px">Cập nhật thông tin</div>
-        <div class="field"><label>Họ tên</label><input class="inp" id="cu-name" value="${p?.fullName||''}"></div>
-        <div class="field"><label>SĐT</label><input class="inp" id="cu-phone" value="${p?.phone||''}"></div>
-        <button class="btn btn-gold btn-sm" onclick="saveCustomerProfile()">Lưu</button>
-      </div>
-      <div class="divider"></div>
-      <div style="margin-top:14px">
-        <div style="font-size:13px;font-weight:600;color:var(--cream);margin-bottom:10px">Đổi mật khẩu</div>
-        <div class="field"><label>Mật khẩu mới</label><input class="inp" id="cu-pw" type="password" placeholder="Tối thiểu 6 ký tự"></div>
-        <button class="btn btn-outline btn-sm" onclick="changeCustomerPw()">Đổi mật khẩu</button>
-      </div>
-    </div>`;
-}
-
-async function saveCustomerProfile(){
-  const name=$('cu-name').value.trim(), phone=$('cu-phone').value.trim();
-  if(!name) return toast('Nhập họ tên','err');
-  await window._firebase.updateDoc(window._firebase.doc(window._db,'customers',currentProfile.id),{fullName:name,phone});
-  currentProfile.fullName=name; currentProfile.phone=phone;
-  toast('Đã cập nhật hồ sơ','ok');
-}
-
-async function changeCustomerPw(){
-  const pw=$('cu-pw').value;
-  if(!pw||pw.length<6) return toast('Tối thiểu 6 ký tự','err');
-  try{ await window._firebase.updatePassword(window._auth.currentUser,pw); toast('Đã đổi mật khẩu','ok'); $('cu-pw').value=''; }
-  catch(e){ toast('Lỗi: '+e.message,'err'); }
+function gNewTrip() {
+  if (gUnsub) { gUnsub(); gUnsub=null; }
+  renderGuestPage();
 }
 </script>
 
@@ -1345,13 +1447,14 @@ async function changeCustomerPw(){
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function isAdmin() { return request.auth != null && request.auth.token.email == 'Admin@myapp.com'; }
-    function isAuth()  { return request.auth != null; }
 
-    match /config/{doc}    { allow read: if isAuth(); allow write: if isAdmin(); }
-    match /drivers/{uid}   { allow read: if isAuth(); allow write: if isAdmin() || request.auth.uid == uid; }
-    match /customers/{uid} { allow read: if isAdmin(); allow write: if isAdmin() || request.auth.uid == uid; }
-    match /trips/{doc}     { allow read, write: if isAuth(); }
+    function isAdmin() { return request.auth != null && request.auth.token.email == 'Admin@myapp.com'; }
+    function isStaff() { return request.auth != null; }
+
+    match /config/{doc}    { allow read: if true;      allow write: if isAdmin(); }
+    match /staff/{doc}     { allow read: if isStaff(); allow write: if isAdmin(); }
+    match /vehicles/{doc}  { allow read: if isStaff(); allow write: if isAdmin(); }
+    match /trips/{doc}     { allow read, write: if true; }
     match /{document=**}   { allow read, write: if false; }
   }
 }
