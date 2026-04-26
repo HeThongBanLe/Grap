@@ -6,33 +6,55 @@
 <title>GrapApp</title>
 
 <script type="module">
-import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, updatePassword }
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp, query, orderBy, where }
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+try {
+  const { initializeApp, getApps } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js");
+  const { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, updatePassword }
+    = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js");
+  const { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp, query, orderBy, where }
+    = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBVJu34eNs5_h5o33tUdPqyuxOx-SU-NGc",
-  authDomain: "grap-377f7.firebaseapp.com",
-  projectId: "grap-377f7",
-  storageBucket: "grap-377f7.firebasestorage.app",
-  messagingSenderId: "523295120957",
-  appId: "1:523295120957:web:8bd84167a87ef4b12b9454",
-  measurementId: "G-4VXZSQ9EB5"
-};
-const app  = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db   = getFirestore(app);
-window._app = app; window._auth = auth; window._db = db;
-window._firebase = {
-  initializeApp, getApps, getAuth,
-  signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut,
-  onAuthStateChanged, updatePassword,
-  collection, doc, setDoc, getDoc, getDocs, addDoc, updateDoc, deleteDoc,
-  onSnapshot, serverTimestamp, query, orderBy, where
-};
-window.dispatchEvent(new Event('firebase-ready'));
+  const firebaseConfig = {
+    apiKey: "AIzaSyBVJu34eNs5_h5o33tUdPqyuxOx-SU-NGc",
+    authDomain: "grap-377f7.firebaseapp.com",
+    projectId: "grap-377f7",
+    storageBucket: "grap-377f7.firebasestorage.app",
+    messagingSenderId: "523295120957",
+    appId: "1:523295120957:web:8bd84167a87ef4b12b9454",
+    measurementId: "G-4VXZSQ9EB5"
+  };
+  const app  = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getFirestore(app);
+  window._app = app; window._auth = auth; window._db = db;
+  window._firebase = {
+    initializeApp, getApps, getAuth,
+    signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut,
+    onAuthStateChanged, updatePassword,
+    collection, doc, setDoc, getDoc, getDocs, addDoc, updateDoc, deleteDoc,
+    onSnapshot, serverTimestamp, query, orderBy, where
+  };
+  window._firebaseReady = true;
+  window.dispatchEvent(new Event('firebase-ready'));
+} catch(e) {
+  window._firebaseError = e.message || String(e);
+  document.addEventListener('DOMContentLoaded', () => {
+    const box = document.createElement('div');
+    box.style.cssText = 'position:fixed;top:10px;left:10px;right:10px;background:#e05a4e;color:#fff;padding:14px;border-radius:8px;font-size:13px;z-index:99999;font-family:sans-serif';
+    box.innerHTML = '❌ Lỗi tải Firebase:<br>' + (e.message || e) + '<br><br>Kiểm tra mạng hoặc trình duyệt.';
+    document.body.appendChild(box);
+  });
+}
+</script>
+
+<!-- Bắt mọi lỗi script và hiện ra màn hình -->
+<script>
+window.addEventListener('error', function(e){
+  const box = document.createElement('div');
+  box.style.cssText = 'position:fixed;top:10px;left:10px;right:10px;background:#e05a4e;color:#fff;padding:12px;border-radius:8px;font-size:12px;z-index:99999;font-family:sans-serif;max-height:200px;overflow:auto';
+  box.textContent = '❌ Lỗi: ' + (e.message||'unknown') + ' @ ' + (e.filename||'').split('/').pop() + ':' + (e.lineno||'');
+  box.onclick = function(){ box.remove(); };
+  document.body.appendChild(box);
+});
 </script>
 
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -368,20 +390,26 @@ function updateLoginSuffix() {
   document.getElementById('lu-suffix').textContent = (!v || v.includes('@')) ? '' : DOMAIN;
 }
 async function doLogin() {
+  if (!window._firebase || !window._auth) {
+    if (window._firebaseError) toast('❌ Firebase lỗi: ' + window._firebaseError, 'err');
+    else toast('⏳ Đang tải Firebase, chờ vài giây rồi thử lại...', 'err');
+    return;
+  }
   let u = document.getElementById('lu').value.trim().toLowerCase();
   const p = document.getElementById('lp').value;
   if (!u || !p) return toast('Nhập đầy đủ thông tin', 'err');
   if (!u.includes('@')) u += DOMAIN;
+  toast('⏳ Đang đăng nhập...', 'info');
   try {
     await window._firebase.signInWithEmailAndPassword(window._auth, u, p);
   } catch(e) {
-    console.error('Login error:', e.code, e.message);
     let msg = 'Sai tài khoản hoặc mật khẩu';
     if (e.code === 'auth/network-request-failed') msg = '❌ Lỗi mạng - kiểm tra internet';
     else if (e.code === 'auth/operation-not-allowed') msg = '❌ Email/Password chưa được bật trong Firebase';
     else if (e.code === 'auth/user-not-found') msg = '❌ Tài khoản không tồn tại';
     else if (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential') msg = '❌ Sai mật khẩu';
     else if (e.code === 'auth/invalid-email') msg = '❌ Email không hợp lệ';
+    else if (e.code === 'auth/too-many-requests') msg = '❌ Đăng nhập sai quá nhiều lần, chờ vài phút';
     else msg = '❌ ' + (e.code || e.message);
     toast(msg, 'err');
   }
