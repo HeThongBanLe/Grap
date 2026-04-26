@@ -279,7 +279,7 @@ window.addEventListener('firebase-ready', () => {
   window._firebase.onAuthStateChanged(window._auth, async u => {
     if (u) {
       currentUser = u;
-      isAdmin = (u.email === ADMIN_EMAIL);
+      isAdmin = (u.email||'').toLowerCase() === ADMIN_EMAIL.toLowerCase();
       if (!isAdmin) {
         const r = await checkStaffActive(u.email);
         if (!r.allowed) {
@@ -372,8 +372,19 @@ async function doLogin() {
   const p = document.getElementById('lp').value;
   if (!u || !p) return toast('Nhập đầy đủ thông tin', 'err');
   if (!u.includes('@')) u += DOMAIN;
-  try { await window._firebase.signInWithEmailAndPassword(window._auth, u, p); }
-  catch { toast('Sai tài khoản hoặc mật khẩu', 'err'); }
+  try {
+    await window._firebase.signInWithEmailAndPassword(window._auth, u, p);
+  } catch(e) {
+    console.error('Login error:', e.code, e.message);
+    let msg = 'Sai tài khoản hoặc mật khẩu';
+    if (e.code === 'auth/network-request-failed') msg = '❌ Lỗi mạng - kiểm tra internet';
+    else if (e.code === 'auth/operation-not-allowed') msg = '❌ Email/Password chưa được bật trong Firebase';
+    else if (e.code === 'auth/user-not-found') msg = '❌ Tài khoản không tồn tại';
+    else if (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential') msg = '❌ Sai mật khẩu';
+    else if (e.code === 'auth/invalid-email') msg = '❌ Email không hợp lệ';
+    else msg = '❌ ' + (e.code || e.message);
+    toast(msg, 'err');
+  }
 }
 async function doLogout() {
   stopTripListener(); stopDisabledWatcher();
@@ -602,7 +613,7 @@ async function changeAdminPassword() {
   if (oldPwd === newPwd)  return toast('Mật khẩu mới phải khác mật khẩu cũ', 'err');
   try {
     const { signInWithEmailAndPassword, updatePassword } = window._firebase;
-    const cred = await signInWithEmailAndPassword(window._auth, ADMIN_EMAIL, oldPwd);
+    const cred = await signInWithEmailAndPassword(window._auth, currentUser.email, oldPwd);
     await updatePassword(cred.user, newPwd);
     document.getElementById('admin-old-pwd').value = '';
     document.getElementById('admin-new-pwd').value = '';
