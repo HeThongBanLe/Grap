@@ -281,15 +281,16 @@ window.addEventListener('firebase-ready', () => {
       currentUser = u;
       isAdmin = (u.email||'').toLowerCase() === ADMIN_EMAIL.toLowerCase();
       if (!isAdmin) {
-        const r = await checkStaffActive(u.email);
+        let r = { allowed: true, fullName: u.email.split('@')[0] };
+        try { r = await checkStaffActive(u.email); } catch(e) {}
         if (!r.allowed) {
           toast('🚫 Tài khoản bị vô hiệu hoá!', 'err');
           await window._firebase.signOut(window._auth); return;
         }
         currentUserFullName = r.fullName || u.email.split('@')[0];
-        startDisabledWatcher(u.email);
+        try { startDisabledWatcher(u.email); } catch(e){}
       } else currentUserFullName = 'Admin';
-      await loadAllData();
+      try { await loadAllData(); } catch(e) { console.warn('loadAllData err', e); }
       showApp();
     } else {
       currentUser = null; isAdmin = false;
@@ -338,13 +339,9 @@ async function loadAppConfigPublic() {
 async function loadAllData() {
   await loadAppConfigPublic();
   const { collection, getDocs } = window._firebase;
-  const [s, v] = await Promise.all([
-    getDocs(collection(window._db,'staff')),
-    getDocs(collection(window._db,'vehicles'))
-  ]);
-  staffList   = s.docs.map(d=>({id:d.id,...d.data()}));
-  vehicleList = v.docs.map(d=>({id:d.id,...d.data()}));
-  subscribeTrips();
+  try { const s = await getDocs(collection(window._db,'staff'));    staffList   = s.docs.map(d=>({id:d.id,...d.data()})); } catch(e) { staffList   = []; }
+  try { const v = await getDocs(collection(window._db,'vehicles')); vehicleList = v.docs.map(d=>({id:d.id,...d.data()})); } catch(e) { vehicleList = []; }
+  try { subscribeTrips(); } catch(e){}
 }
 
 function subscribeTrips() {
