@@ -1,1463 +1,772 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>GrapApp</title>
-
-<script type="module">
-import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, updatePassword }
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp, query, orderBy, where }
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyBVJu34eNs5_h5o33tUdPqyuxOx-SU-NGc",
-  authDomain: "grap-377f7.firebaseapp.com",
-  projectId: "grap-377f7",
-  storageBucket: "grap-377f7.firebasestorage.app",
-  messagingSenderId: "523295120957",
-  appId: "1:523295120957:web:8bd84167a87ef4b12b9454",
-  measurementId: "G-4VXZSQ9EB5"
-};
-const app  = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db   = getFirestore(app);
-window._app = app; window._auth = auth; window._db = db;
-window._firebase = {
-  initializeApp, getApps, getAuth,
-  signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut,
-  onAuthStateChanged, updatePassword,
-  collection, doc, setDoc, getDoc, getDocs, addDoc, updateDoc, deleteDoc,
-  onSnapshot, serverTimestamp, query, orderBy, where
-};
-window.dispatchEvent(new Event('firebase-ready'));
-</script>
-
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Quản lý người dùng — Firebase</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-:root{
-  --accent:#c9a84c;--accent2:#e8c96a;
-  --bg:#0f0d0b;--surface:#1a1714;--surface2:#231f1b;--surface3:#2e2924;
-  --border:#3a332c;--cream:#f5ead8;--text:#f0e6d3;--text2:#b0a090;--text3:#6b5f52;
-  --red:#e05a4e;--green:#5aab7a;--blue:#5a8fc9;--orange:#e8894e;
-  --r:12px;--sh:0 4px 24px rgba(0,0,0,.4);
-}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
-h1,h2,h3{font-family:'Playfair Display',serif}
-::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+  :root {
+    --bg: #0b0d10;
+    --bg-elev: #14171c;
+    --bg-elev-2: #1b1f26;
+    --border: #262b33;
+    --border-strong: #353c48;
+    --text: #e7eaf0;
+    --text-dim: #8a92a0;
+    --text-muted: #5b6270;
+    --accent: #ffb547;
+    --accent-dim: #b07a2a;
+    --danger: #ff5d5d;
+    --success: #3ddc84;
+    --info: #6cb6ff;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; }
+  body {
+    font-family: 'Manrope', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  code, .mono { font-family: 'JetBrains Mono', monospace; }
 
-#toast-wrap{position:fixed;bottom:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:6px;pointer-events:none}
-.toast{background:var(--surface2);border:1px solid var(--border);border-left:4px solid var(--accent);padding:10px 14px;border-radius:8px;font-size:13px;max-width:300px;animation:tslide .3s}
-.toast.err{border-left-color:var(--red)}.toast.ok{border-left-color:var(--green)}.toast.info{border-left-color:var(--blue)}
-@keyframes tslide{from{transform:translateX(110%);opacity:0}to{transform:translateX(0);opacity:1}}
+  /* ===== Layout ===== */
+  .center-screen {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+  }
+  .card {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+  }
+  .login-card { width: 100%; max-width: 420px; }
 
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 16px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap;font-family:inherit}
-.btn:active{transform:scale(.97)}
-.btn-full{width:100%}
-.btn-gold{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#1a1000}
-.btn-gold:hover{filter:brightness(1.1)}
-.btn-outline{background:transparent;color:var(--text2);border:1px solid var(--border)}
-.btn-outline:hover{border-color:var(--accent);color:var(--accent)}
-.btn-red{background:var(--red);color:#fff}.btn-red:hover{filter:brightness(1.1)}
-.btn-green{background:var(--green);color:#fff}.btn-green:hover{filter:brightness(1.1)}
-.btn-blue{background:var(--blue);color:#fff}.btn-blue:hover{filter:brightness(1.1)}
-.btn-ghost{background:var(--surface2);color:var(--text2);border:1px solid var(--border)}
-.btn-ghost:hover{color:var(--text)}
-.btn-sm{padding:6px 12px;font-size:12px}
-.btn-xs{padding:4px 8px;font-size:11px;border-radius:5px}
+  /* ===== Header ===== */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 28px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-elev);
+    position: sticky; top: 0; z-index: 10;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 12px;
+    font-weight: 800; letter-spacing: -0.01em;
+  }
+  .brand-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 12px var(--accent);
+  }
+  .user-pill {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 12px;
+    background: var(--bg-elev-2);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 13px;
+  }
+  .role-badge {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
+    padding: 2px 8px; border-radius: 4px;
+    background: var(--accent); color: #1a1207;
+    text-transform: uppercase;
+  }
+  .role-badge.user { background: var(--info); color: #08111c; }
 
-.field{margin-bottom:14px}
-.field label{display:block;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px}
-.inp{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:14px;outline:none;transition:border .2s;font-family:inherit}
-.inp:focus{border-color:var(--accent)}
-select.inp option{background:var(--surface2)}
-.input-row{display:flex;gap:8px}
-.input-row .field{flex:1}
-.login-suffix{position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:12px;pointer-events:none}
+  /* ===== Forms ===== */
+  h1 { font-size: 22px; font-weight: 800; margin: 0 0 6px; letter-spacing: -0.02em; }
+  h2 { font-size: 17px; font-weight: 700; margin: 0 0 16px; letter-spacing: -0.01em; }
+  .subtitle { color: var(--text-dim); margin: 0 0 24px; font-size: 13px; }
 
-#login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 30% 50%,#2a1f0e,#0f0d0b)}
-.login-box{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:40px 36px;width:360px;box-shadow:var(--sh)}
-.login-logo{text-align:center;margin-bottom:28px}
-.login-logo h1{font-size:30px;color:var(--accent)}
-.login-logo p{font-size:11px;color:var(--text3);letter-spacing:4px;text-transform:uppercase;margin-top:4px}
-.login-or{text-align:center;color:var(--text3);font-size:12px;margin:14px 0;position:relative}
-.login-or::before,.login-or::after{content:'';position:absolute;top:50%;width:42%;height:1px;background:var(--border)}
-.login-or::before{left:0}.login-or::after{right:0}
+  label {
+    display: block; font-size: 12px; font-weight: 600;
+    color: var(--text-dim); margin-bottom: 6px;
+    text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  input, select {
+    width: 100%; padding: 10px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text); font-size: 14px; font-family: inherit;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  input:focus, select:focus {
+    outline: none; border-color: var(--accent);
+    background: var(--bg-elev-2);
+  }
+  .field { margin-bottom: 14px; }
 
-#app{display:none;min-height:100vh}
-.sidebar{position:fixed;left:0;top:0;bottom:0;width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:100;transition:transform .3s}
-.sidebar-logo{padding:20px 18px 16px;border-bottom:1px solid var(--border)}
-.sidebar-logo h2{font-size:20px;color:var(--accent)}
-.sidebar-logo p{font-size:11px;color:var(--text3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.nav-item{display:flex;align-items:center;gap:10px;padding:12px 18px;cursor:pointer;color:var(--text2);transition:all .2s;border-left:3px solid transparent;font-size:13px;font-weight:500}
-.nav-item:hover{background:var(--surface2);color:var(--text)}
-.nav-item.active{background:var(--surface2);color:var(--accent);border-left-color:var(--accent)}
-.nav-icon{font-size:17px;width:20px;text-align:center}
-.sidebar-bottom{margin-top:auto;padding:14px 18px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px}
-.avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#8b6914);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#1a1000;flex-shrink:0}
-.user-info{flex:1;min-width:0}
-.user-name{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.user-role{font-size:10px;color:var(--text3)}
-.logout-btn{background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px;padding:4px}
-.logout-btn:hover{color:var(--red)}
-.main{margin-left:220px;padding:22px;min-height:100vh;transition:margin .3s}
-.hamburger{display:none;position:fixed;top:10px;left:10px;z-index:300;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 10px;cursor:pointer;font-size:20px}
-.backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99}
+  button {
+    padding: 10px 16px;
+    border: 1px solid var(--border-strong);
+    background: var(--bg-elev-2);
+    color: var(--text);
+    border-radius: 8px;
+    font-family: inherit; font-size: 13px; font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  button:hover { border-color: var(--accent); }
+  button.primary {
+    background: var(--accent); color: #1a1207;
+    border-color: var(--accent);
+  }
+  button.primary:hover { background: #ffc775; }
+  button.danger {
+    background: transparent; color: var(--danger);
+    border-color: rgba(255, 93, 93, 0.3);
+  }
+  button.danger:hover { background: rgba(255, 93, 93, 0.1); border-color: var(--danger); }
+  button.ghost {
+    background: transparent; border-color: var(--border);
+  }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
 
-#guest-screen{min-height:100vh;display:none}
-.guest-header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 20px;display:flex;align-items:center;gap:12px}
-.guest-header h2{font-size:20px;color:var(--accent);flex:1}
-.guest-body{padding:20px;max-width:640px;margin:0 auto}
+  .btn-row { display: flex; gap: 8px; margin-top: 16px; }
+  .btn-row button { flex: 1; }
 
-.trip-panel{position:fixed;right:0;top:0;bottom:0;width:340px;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;z-index:200;transform:translateX(100%);transition:transform .3s}
-.trip-panel.open{transform:translateX(0)}
-.tp-head{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
-.tp-title{font-size:17px;font-weight:700;flex:1}
-.tp-body{flex:1;overflow-y:auto;padding:14px}
-.tp-foot{padding:14px;border-top:1px solid var(--border)}
+  /* ===== Toast/Status ===== */
+  .status {
+    margin-top: 14px; padding: 10px 12px;
+    border-radius: 8px; font-size: 13px;
+    border: 1px solid var(--border);
+  }
+  .status.error { background: rgba(255, 93, 93, 0.08); border-color: rgba(255, 93, 93, 0.3); color: var(--danger); }
+  .status.success { background: rgba(61, 220, 132, 0.08); border-color: rgba(61, 220, 132, 0.3); color: var(--success); }
+  .status.info { background: rgba(108, 182, 255, 0.08); border-color: rgba(108, 182, 255, 0.3); color: var(--info); }
+  .status:empty { display: none; }
 
-.ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px}
-.ph-title{font-size:24px;color:var(--cream)}
-.ph-sub{font-size:12px;color:var(--text3);margin-top:2px}
+  /* ===== Admin layout ===== */
+  .container { max-width: 1100px; margin: 0 auto; padding: 32px 28px; }
+  .grid-2 { display: grid; grid-template-columns: 380px 1fr; gap: 24px; }
+  @media (max-width: 880px) { .grid-2 { grid-template-columns: 1fr; } }
 
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:14px}
-.card-title{font-size:15px;font-weight:600;color:var(--cream);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+  /* ===== User table ===== */
+  .users-list {
+    display: flex; flex-direction: column;
+    border: 1px solid var(--border); border-radius: 12px;
+    overflow: hidden;
+  }
+  .user-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto auto;
+    gap: 16px; align-items: center;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-elev);
+  }
+  .user-row:last-child { border-bottom: none; }
+  .user-row.header {
+    background: var(--bg-elev-2);
+    font-size: 11px; font-weight: 700;
+    color: var(--text-dim);
+    text-transform: uppercase; letter-spacing: 0.08em;
+  }
+  .user-name { font-weight: 600; }
+  .user-email { color: var(--text-dim); font-size: 13px; }
+  .uid-mono { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .actions { display: flex; gap: 6px; }
+  .actions button { padding: 6px 10px; font-size: 12px; }
+  .empty {
+    padding: 40px; text-align: center; color: var(--text-muted);
+    background: var(--bg-elev);
+  }
+  .disabled-tag {
+    display: inline-block; font-size: 10px; font-weight: 700;
+    padding: 2px 6px; border-radius: 4px;
+    background: rgba(255, 93, 93, 0.15); color: var(--danger);
+    margin-left: 8px;
+  }
 
-.tbl-wrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse}
-th{text-align:left;padding:8px 12px;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);border-bottom:1px solid var(--border)}
-td{padding:9px 12px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text)}
-tr:last-child td{border-bottom:none}
-tbody tr:hover td{background:rgba(255,255,255,.02)}
+  /* ===== Modal ===== */
+  .modal-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: grid; place-items: center;
+    z-index: 100; padding: 24px;
+  }
+  .modal {
+    width: 100%; max-width: 460px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+  }
 
-.tag{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600}
-.tag-gold{background:#2a2010;color:var(--accent);border:1px solid #4a3a18}
-.tag-green{background:#0f2a1a;color:var(--green);border:1px solid #1a4a2a}
-.tag-blue{background:#0f1e2a;color:var(--blue);border:1px solid #1a304a}
-.tag-red{background:#2a0f0e;color:var(--red);border:1px solid #4a1e1a}
-.tag-orange{background:#2a1a0e;color:var(--orange);border:1px solid #4a2a1a}
-.tag-gray{background:var(--surface2);color:var(--text3);border:1px solid var(--border)}
+  .hint {
+    font-size: 12px; color: var(--text-muted);
+    margin-top: 8px; line-height: 1.5;
+  }
+  .hint code { background: var(--bg-elev-2); padding: 1px 5px; border-radius: 3px; }
 
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:500;display:flex;align-items:center;justify-content:center;padding:14px;backdrop-filter:blur(4px)}
-.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;box-shadow:var(--sh)}
-.modal-title{font-size:18px;color:var(--cream);margin-bottom:18px;display:flex;align-items:center;justify-content:space-between}
-.modal-close{background:none;border:none;color:var(--text3);cursor:pointer;font-size:20px}
-.modal-close:hover{color:var(--red)}
-.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
+  hr.sep { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
 
-.tabs{display:flex;gap:4px;margin-bottom:16px;flex-wrap:wrap}
-.tab{padding:7px 16px;border-radius:7px;cursor:pointer;font-size:12px;font-weight:500;color:var(--text2);border:1px solid var(--border);transition:all .2s}
-.tab.active{background:var(--accent);color:#1a1000;border-color:var(--accent)}
-.tab:hover:not(.active){border-color:var(--accent);color:var(--accent)}
+  .toggle-link {
+    background: none; border: none; padding: 0;
+    color: var(--accent); cursor: pointer; font-size: 12px;
+    text-decoration: underline;
+  }
 
-.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:20px}
-.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px}
-.stat-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px}
-.stat-val{font-size:26px;font-weight:700;color:var(--cream);margin-top:4px}
-.stat-sub{font-size:11px;color:var(--text3);margin-top:3px}
+  [hidden] { display: none !important; }
 
-.trip-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
-.t-card{background:var(--surface2);border:2px solid var(--border);border-radius:10px;padding:14px;cursor:pointer;transition:all .2s}
-.t-card:hover{border-color:var(--accent);transform:translateY(-2px)}
-.t-card.pending{border-color:var(--orange)}
-.t-card.accepted{border-color:var(--blue)}
-.t-card.onride{border-color:var(--green)}
-.t-card.selected{box-shadow:0 0 0 3px rgba(201,168,76,.35);border-color:var(--accent2)}
-
-.hist-item{background:var(--surface2);border-radius:9px;margin-bottom:10px;overflow:hidden}
-.hist-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;cursor:pointer}
-.hist-head:hover{background:rgba(255,255,255,.03)}
-.hist-body{padding:0;border-top:1px solid var(--border);display:none}
-.hist-body.open{display:block;padding:10px 14px 12px}
-
-.filter-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px}
-
-.spinner{width:30px;height:30px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin:40px auto}
-@keyframes spin{to{transform:rotate(360deg)}}
-.empty{text-align:center;color:var(--text3);padding:32px;font-size:13px}
-.divider{height:1px;background:var(--border);margin:12px 0}
-
-@media(max-width:768px){
-  .sidebar{transform:translateX(-100%)}
-  .sidebar.open{transform:translateX(0)}
-  .backdrop.show{display:block}
-  .hamburger{display:flex;align-items:center}
-  .main{margin-left:0;padding:14px;padding-top:52px}
-  .trip-panel{width:100%}
-  .stats-grid{grid-template-columns:1fr 1fr}
-  .input-row{flex-direction:column}
-  .ph-title{font-size:19px}
-}
+  /* loading spinner */
+  .spinner {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,0.2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
 
-<div id="toast-wrap"></div>
+<!-- ============ LOGIN VIEW ============ -->
+<div id="loginView" class="center-screen">
+  <div class="card login-card">
+    <h1 id="loginTitle">Đăng nhập</h1>
+    <p class="subtitle" id="loginSubtitle">Hệ thống quản lý người dùng</p>
 
-<!-- LOGIN -->
-<div id="login-screen">
-  <div class="login-box">
-    <div class="login-logo"><h1>🚗 GrapApp</h1><p>QUẢN LÝ ĐẶT XE</p></div>
     <div class="field">
-      <label>Tên đăng nhập</label>
-      <div style="position:relative">
-        <input class="inp" id="lu" placeholder="admin hoặc tên nhân viên" oninput="updateLoginSuffix()" onkeydown="if(event.key==='Enter')doLogin()">
-        <span class="login-suffix" id="lu-suffix"></span>
-      </div>
+      <label>Email</label>
+      <input id="loginEmail" type="email" placeholder="you@myapp.com" autocomplete="username" />
     </div>
-    <div class="field"><label>Mật khẩu</label>
-      <input class="inp" type="password" id="lp" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    <div class="field">
+      <label>Mật khẩu</label>
+      <input id="loginPassword" type="password" placeholder="••••••••" autocomplete="current-password" />
     </div>
-    <button class="btn btn-gold btn-full" onclick="doLogin()">Đăng nhập</button>
-    <div class="login-or">hoặc</div>
-    <button class="btn btn-outline btn-full" onclick="showGuest()">👤 Đặt xe (Khách)</button>
+
+    <div class="btn-row">
+      <button class="primary" id="btnLogin">Đăng nhập</button>
+    </div>
+
+    <div id="loginStatus" class="status"></div>
+
+    <hr class="sep">
+    <p class="hint">
+      Lần đầu chạy? Tạo tài khoản admin <code>admin@myapp.com</code> trước.
+      <br>
+      <button class="toggle-link" id="toggleBootstrap">Đăng ký admin lần đầu →</button>
+    </p>
   </div>
 </div>
 
-<!-- KHÁCH -->
-<div id="guest-screen">
-  <div class="guest-header">
-    <h2>🚗 GrapApp</h2>
-    <button class="btn btn-outline btn-sm" onclick="showLogin()">🔑 Nhân viên đăng nhập</button>
-  </div>
-  <div class="guest-body" id="guest-body"><div class="spinner"></div></div>
-</div>
-
-<!-- APP -->
-<div id="app">
-  <button class="hamburger" onclick="toggleSidebar()">☰</button>
-  <div class="backdrop" id="backdrop" onclick="toggleSidebar()"></div>
-  <div class="sidebar" id="sidebar">
-    <div class="sidebar-logo">
-      <h2>🚗 GrapApp</h2>
-      <p id="sb-sub">Quản lý đặt xe</p>
+<!-- ============ ADMIN VIEW ============ -->
+<div id="adminView" hidden>
+  <div class="topbar">
+    <div class="brand">
+      <span class="brand-dot"></span>
+      <span>User Management</span>
     </div>
-    <nav id="nav"></nav>
-    <div class="sidebar-bottom">
-      <div class="avatar" id="sb-avatar">?</div>
-      <div class="user-info">
-        <div class="user-name" id="sb-uname"></div>
-        <div class="user-role" id="sb-urole"></div>
+    <div style="display:flex; align-items:center; gap:12px;">
+      <div class="user-pill">
+        <span class="role-badge">Admin</span>
+        <span id="adminEmailLabel"></span>
       </div>
-      <button class="logout-btn" onclick="doLogout()" title="Đăng xuất">⏻</button>
+      <button class="ghost" id="btnLogout">Đăng xuất</button>
     </div>
   </div>
-  <div class="main" id="main"></div>
-</div>
 
-<!-- TRIP DETAIL PANEL -->
-<div class="trip-panel" id="trip-panel">
-  <div class="tp-head">
-    <div>
-      <div class="tp-title" id="tp-title">Chi tiết</div>
-      <div style="font-size:11px;color:var(--text3)" id="tp-meta"></div>
-    </div>
-    <button class="btn btn-outline btn-sm" onclick="closeTP()">✕</button>
-  </div>
-  <div class="tp-body" id="tp-body"></div>
-  <div class="tp-foot" id="tp-foot"></div>
-</div>
-
-<div id="modal-wrap"></div>
-
-<script>
-const ADMIN_EMAIL = 'Admin@myapp.com';
-const DOMAIN      = '@myapp.com';
-
-let currentUser = null, isAdmin = false;
-let currentUserFullName = '';
-let appConfig = {}, staffList = [], vehicleList = [], activeTrips = {};
-let currentTripId = null, currentPage = '', bookingFilter = 'all';
-let unsubTrips = null, unsubDisabled = null;
-
-// ═════ FIREBASE READY ═════
-window.addEventListener('firebase-ready', () => {
-  loadAppConfigPublic();
-  window._firebase.onAuthStateChanged(window._auth, async u => {
-    if (u) {
-      currentUser = u;
-      isAdmin = (u.email||'').toLowerCase() === ADMIN_EMAIL.toLowerCase();
-      if (!isAdmin) {
-        let r = { allowed: true, fullName: u.email.split('@')[0] };
-        try { r = await checkStaffActive(u.email); } catch(e) {}
-        if (!r.allowed) {
-          toast('🚫 Tài khoản bị vô hiệu hoá!', 'err');
-          await window._firebase.signOut(window._auth); return;
-        }
-        currentUserFullName = r.fullName || u.email.split('@')[0];
-        try { startDisabledWatcher(u.email); } catch(e){}
-      } else currentUserFullName = 'Admin';
-      try { await loadAllData(); } catch(e) { console.warn('loadAllData err', e); }
-      showApp();
-    } else {
-      currentUser = null; isAdmin = false;
-      stopDisabledWatcher(); stopTripListener();
-      hideAll(); showLogin();
-    }
-  });
-});
-
-async function checkStaffActive(email) {
-  const e = (email||'').toLowerCase().trim();
-  try {
-    const { collection, query, where, getDocs } = window._firebase;
-    const snap = await getDocs(query(collection(window._db,'staff'), where('email','==',e)));
-    if (snap.empty) return { allowed: true, fullName: e.split('@')[0] };
-    const d = snap.docs[0].data();
-    if (d.active === false) return { allowed: false, fullName: d.fullName||'' };
-    return { allowed: true, fullName: d.fullName || e.split('@')[0] };
-  } catch { return { allowed: true, fullName: e.split('@')[0] }; }
-}
-
-function startDisabledWatcher(email) {
-  stopDisabledWatcher();
-  const e = (email||'').toLowerCase().trim();
-  const ref = window._firebase.doc(window._db,'config','disabled');
-  unsubDisabled = window._firebase.onSnapshot(ref, snap => {
-    if (!currentUser || isAdmin) return;
-    const emails = (snap.data()?.emails || []).map(x=>(x||'').toLowerCase().trim());
-    if (emails.includes(e)) {
-      toast('🚫 Tài khoản của bạn vừa bị vô hiệu hoá!', 'err');
-      stopDisabledWatcher();
-      setTimeout(async () => { try { await window._firebase.signOut(window._auth); } catch(e){} }, 1200);
-    }
-  });
-}
-function stopDisabledWatcher() { if (unsubDisabled) { unsubDisabled(); unsubDisabled = null; } }
-function stopTripListener()    { if (unsubTrips)    { unsubTrips();    unsubTrips    = null; } }
-
-async function loadAppConfigPublic() {
-  try {
-    const snap = await window._firebase.getDoc(window._firebase.doc(window._db,'config','app'));
-    if (snap.exists()) appConfig = { ...appConfig, ...snap.data() };
-  } catch {}
-}
-
-async function loadAllData() {
-  await loadAppConfigPublic();
-  const { collection, getDocs } = window._firebase;
-  try { const s = await getDocs(collection(window._db,'staff'));    staffList   = s.docs.map(d=>({id:d.id,...d.data()})); } catch(e) { staffList   = []; }
-  try { const v = await getDocs(collection(window._db,'vehicles')); vehicleList = v.docs.map(d=>({id:d.id,...d.data()})); } catch(e) { vehicleList = []; }
-  try { subscribeTrips(); } catch(e){}
-}
-
-function subscribeTrips() {
-  stopTripListener();
-  const { collection, query, where, onSnapshot } = window._firebase;
-  const q = query(collection(window._db,'trips'), where('status','in',['pending','accepted','onride']));
-  unsubTrips = onSnapshot(q, snap => {
-    snap.docChanges().forEach(ch => {
-      if (ch.type === 'removed') delete activeTrips[ch.doc.id];
-      else activeTrips[ch.doc.id] = { id: ch.doc.id, ...ch.doc.data() };
-    });
-    refreshTripGrid();
-    if (currentTripId && document.getElementById('trip-panel').classList.contains('open')) renderTP(currentTripId);
-    if (currentPage === 'dashboard') refreshDashTrips();
-  });
-}
-
-// ═════ AUTH ═════
-function updateLoginSuffix() {
-  const v = document.getElementById('lu').value.trim();
-  document.getElementById('lu-suffix').textContent = (!v || v.includes('@')) ? '' : DOMAIN;
-}
-async function doLogin() {
-  let u = document.getElementById('lu').value.trim().toLowerCase();
-  const p = document.getElementById('lp').value;
-  if (!u || !p) return toast('Nhập đầy đủ thông tin', 'err');
-  if (!u.includes('@')) u += DOMAIN;
-  try {
-    await window._firebase.signInWithEmailAndPassword(window._auth, u, p);
-  } catch(e) {
-    toast('Sai tài khoản hoặc mật khẩu', 'err');
-  }
-}
-async function doLogout() {
-  stopTripListener(); stopDisabledWatcher();
-  await window._firebase.signOut(window._auth);
-  document.getElementById('lp').value=''; document.getElementById('lu').value='';
-  document.getElementById('lu-suffix').textContent='';
-}
-function hideAll() { ['login-screen','guest-screen','app'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';}); }
-function showLogin() { hideAll(); document.getElementById('login-screen').style.display='flex'; }
-function showGuest() { hideAll(); document.getElementById('guest-screen').style.display='block'; renderGuestPage(); }
-
-// ═════ APP UI ═════
-const ADMIN_NAV = [
-  { id:'dashboard', icon:'📊', label:'Tổng quan' },
-  { id:'staff',     icon:'👥', label:'Nhân viên' },
-  { id:'vehicles',  icon:'🚘', label:'Quản lý xe' },
-  { id:'booking',   icon:'🗺️', label:'Đặt xe' },
-  { id:'history',   icon:'📋', label:'Lịch sử' },
-  { id:'settings',  icon:'⚙️', label:'Cài đặt' },
-];
-const STAFF_NAV = [
-  { id:'booking', icon:'🗺️', label:'Chuyến xe' },
-  { id:'history', icon:'📋', label:'Lịch sử' },
-];
-
-function showApp() {
-  hideAll();
-  document.getElementById('app').style.display = 'block';
-  buildNav(); updateSidebar();
-  navigateTo(isAdmin ? 'dashboard' : 'booking');
-}
-function buildNav() {
-  const pages = isAdmin ? ADMIN_NAV : STAFF_NAV;
-  document.getElementById('nav').innerHTML = pages.map(p =>
-    `<div class="nav-item" id="nav-${p.id}" onclick="navigateTo('${p.id}')">
-       <span class="nav-icon">${p.icon}</span>${p.label}
-     </div>`).join('');
-}
-function updateSidebar() {
-  const name = currentUserFullName || (currentUser?.email||'').split('@')[0];
-  document.getElementById('sb-avatar').textContent = name[0].toUpperCase();
-  document.getElementById('sb-uname').textContent  = name;
-  document.getElementById('sb-urole').textContent  = isAdmin ? '👑 Admin' : '🚗 Nhân viên';
-}
-function navigateTo(page) {
-  currentPage = page;
-  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-  const nav = document.getElementById('nav-'+page);
-  if (nav) nav.classList.add('active');
-  closeSidebar(); closeTP();
-  document.getElementById('main').innerHTML = '<div class="spinner"></div>';
-  setTimeout(() => {
-    if (page==='dashboard')      renderDashboard();
-    else if (page==='staff')     renderStaff();
-    else if (page==='vehicles')  renderVehicles();
-    else if (page==='booking')   renderBooking();
-    else if (page==='history')   renderHistory();
-    else if (page==='settings')  renderSettings();
-  }, 60);
-}
-function toggleSidebar() {
-  document.getElementById('sidebar').classList.toggle('open');
-  document.getElementById('backdrop').classList.toggle('show');
-}
-function closeSidebar() {
-  document.getElementById('sidebar').classList.remove('open');
-  document.getElementById('backdrop').classList.remove('show');
-}
-
-// ═════ HELPERS ═════
-function loginName(e) { return (e||'').split('@')[0]; }
-function displayName(e) {
-  if (!e) return '';
-  if (!e.includes('@')) return e;
-  const s = staffList.find(x => x.email===e || x.email===e.toLowerCase());
-  return s?.fullName || e.split('@')[0];
-}
-function fmtMoney(n) { return Number(n||0).toLocaleString('vi-VN') + ' ₫'; }
-function fmtDate(ts) {
-  if (!ts) return '—';
-  const d = ts?.toDate ? ts.toDate() : new Date(ts);
-  return d.toLocaleString('vi-VN');
-}
-function toast(msg, type='info') {
-  const el = document.createElement('div');
-  el.className = 'toast ' + (type==='error'?'err':type);
-  el.textContent = msg;
-  document.getElementById('toast-wrap').appendChild(el);
-  setTimeout(() => el.remove(), 3500);
-}
-function openModal(html) {
-  document.getElementById('modal-wrap').innerHTML =
-    `<div class="modal-overlay" onclick="if(event.target===this)closeModal()">${html}</div>`;
-}
-function closeModal() { document.getElementById('modal-wrap').innerHTML = ''; }
-function statusTag(s) {
-  return ({
-    pending:   '<span class="tag tag-orange">⏳ Chờ xác nhận</span>',
-    accepted:  '<span class="tag tag-blue">✅ Đã nhận</span>',
-    onride:    '<span class="tag tag-gold">🚗 Đang chạy</span>',
-    completed: '<span class="tag tag-green">✔ Hoàn thành</span>',
-    cancelled: '<span class="tag tag-red">✕ Đã huỷ</span>',
-  })[s] || `<span class="tag tag-gray">${s}</span>`;
-}
-function escapeHTML(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
-// ════════════════════════
-//   1️⃣ TỔNG QUAN
-// ════════════════════════
-async function renderDashboard() {
-  const active   = Object.values(activeTrips);
-  const pending  = active.filter(t => t.status==='pending').length;
-  const accepted = active.filter(t => t.status==='accepted').length;
-  const onride   = active.filter(t => t.status==='onride').length;
-
-  let todayTrips = 0, revenue = 0;
-  try {
-    const { collection, getDocs, query, where } = window._firebase;
-    const today = new Date(); today.setHours(0,0,0,0);
-    const snap  = await getDocs(query(collection(window._db,'trips'), where('status','in',['completed','cancelled'])));
-    snap.docs.forEach(d => {
-      const t = d.data();
-      const at = t.createdAt?.toDate ? t.createdAt.toDate() : new Date(0);
-      if (at >= today) todayTrips++;
-      if (t.status === 'completed') revenue += (t.fare||0);
-    });
-  } catch {}
-
-  document.getElementById('main').innerHTML = `
-    <div class="ph"><div><h2 class="ph-title">Tổng quan</h2></div></div>
-    <div class="stats-grid">
-      <div class="stat"><div class="stat-label">Chờ xác nhận</div><div class="stat-val" style="color:var(--orange)">${pending}</div><div class="stat-sub">chuyến</div></div>
-      <div class="stat"><div class="stat-label">Đã nhận</div><div class="stat-val" style="color:var(--blue)">${accepted}</div><div class="stat-sub">chờ chạy</div></div>
-      <div class="stat"><div class="stat-label">Đang chạy</div><div class="stat-val" style="color:var(--green)">${onride}</div><div class="stat-sub">trên đường</div></div>
-      <div class="stat"><div class="stat-label">Hôm nay</div><div class="stat-val">${todayTrips}</div><div class="stat-sub">chuyến</div></div>
-      <div class="stat"><div class="stat-label">Doanh thu</div><div class="stat-val" style="color:var(--accent);font-size:18px">${fmtMoney(revenue)}</div><div class="stat-sub">tổng cộng</div></div>
-      <div class="stat"><div class="stat-label">Nhân viên</div><div class="stat-val">${staffList.filter(s=>s.active!==false).length}</div><div class="stat-sub">/ ${staffList.length} tổng</div></div>
-      <div class="stat"><div class="stat-label">Xe</div><div class="stat-val">${vehicleList.filter(v=>v.active!==false).length}</div><div class="stat-sub">/ ${vehicleList.length} tổng</div></div>
-    </div>
-    <div class="card">
-      <div class="card-title">🗺️ Chuyến đang hoạt động</div>
-      <div id="dash-trips"></div>
-    </div>`;
-  refreshDashTrips();
-}
-
-function refreshDashTrips() {
-  const el = document.getElementById('dash-trips');
-  if (!el) return;
-  const list = Object.values(activeTrips);
-  if (!list.length) { el.innerHTML = '<div class="empty">Không có chuyến đang hoạt động</div>'; return; }
-  el.innerHTML = `<div class="tbl-wrap"><table>
-    <thead><tr><th>Khách</th><th>SĐT</th><th>Nơi đón</th><th>Điểm đến</th><th>Nhân viên</th><th>Trạng thái</th><th></th></tr></thead>
-    <tbody>${list.map(t=>`<tr>
-      <td><strong>${escapeHTML(t.passengerName||t.customerName||'—')}</strong></td>
-      <td>${escapeHTML(t.passengerPhone||t.customerPhone||'—')}</td>
-      <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHTML(t.pickup||'')}</td>
-      <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHTML(t.dropoff||'')}</td>
-      <td>${escapeHTML(t.driverName||'—')}</td>
-      <td>${statusTag(t.status)}</td>
-      <td><button class="btn btn-ghost btn-xs" onclick="openTripDetail('${t.id}')">Xem</button></td>
-    </tr>`).join('')}</tbody></table></div>`;
-}
-
-// ════════════════════════
-//   2️⃣ NHÂN VIÊN
-// ════════════════════════
-function renderStaff() {
-  document.getElementById('main').innerHTML = `
-    <div class="ph">
-      <div><h2 class="ph-title">Quản lý nhân viên</h2></div>
-      <button class="btn btn-gold btn-sm" onclick="openAddStaffModal()">+ Thêm nhân viên</button>
-    </div>
-
-    <div class="card" style="border:2px solid var(--accent)">
-      <div class="card-title">🔑 Đổi mật khẩu Admin</div>
-      <div class="input-row">
-        <div class="field"><label>Mật khẩu hiện tại</label><input class="inp" type="password" id="admin-old-pwd" placeholder="Mật khẩu hiện tại"></div>
-        <div class="field"><label>Mật khẩu mới</label><input class="inp" type="password" id="admin-new-pwd" placeholder="Tối thiểu 6 ký tự"></div>
-      </div>
-      <button class="btn btn-gold btn-sm" onclick="changeAdminPassword()">🔑 Đổi mật khẩu admin</button>
-    </div>
-
-    <div class="card">
-      <div class="card-title">👥 Danh sách nhân viên</div>
-      <div id="staff-list-area"><div class="spinner"></div></div>
-    </div>`;
-  renderStaffList();
-}
-
-function renderStaffList() {
-  const area = document.getElementById('staff-list-area');
-  if (!area) return;
-  if (!staffList.length) { area.innerHTML = '<div class="empty">Chưa có nhân viên nào</div>'; return; }
-  area.innerHTML = `<div class="tbl-wrap"><table>
-    <thead><tr><th>Tên đăng nhập</th><th>Họ tên</th><th>SĐT</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
-    <tbody>${staffList.map(s => {
-      const a = s.active !== false;
-      return `<tr style="${a?'':'opacity:.5'}">
-        <td style="font-weight:600">${escapeHTML(loginName(s.email))}</td>
-        <td>${escapeHTML(s.fullName||'—')}</td>
-        <td>${escapeHTML(s.phone||'—')}</td>
-        <td>${a ? '<span class="tag tag-green">✓ Hoạt động</span>' : '<span class="tag tag-red">✗ Đã khoá</span>'}</td>
-        <td style="display:flex;gap:4px;flex-wrap:wrap">
-          <button class="btn btn-ghost btn-xs" onclick="openEditStaff('${s.id}')">✏️ Sửa</button>
-          ${a
-            ? `<button class="btn btn-red btn-xs" onclick="deactivateStaff('${s.id}','${s.email}')">🚫 Khoá</button>`
-            : `<button class="btn btn-green btn-xs" onclick="reactivateStaff('${s.id}','${s.email}')">✅ Mở khoá</button>`}
-          <button class="btn btn-red btn-xs" onclick="deleteStaff('${s.id}','${s.email}')">🗑</button>
-        </td>
-      </tr>`;
-    }).join('')}</tbody></table></div>`;
-}
-
-async function getSecondaryAuth() {
-  const { initializeApp, getAuth } = window._firebase;
-  const secApp = initializeApp(window._app.options, 'sec_' + Date.now());
-  return getAuth(secApp);
-}
-
-async function changeAdminPassword() {
-  const oldPwd = document.getElementById('admin-old-pwd').value;
-  const newPwd = document.getElementById('admin-new-pwd').value;
-  if (!oldPwd || !newPwd) return toast('Nhập đủ mật khẩu hiện tại và mới', 'err');
-  if (newPwd.length < 6)  return toast('Mật khẩu mới tối thiểu 6 ký tự', 'err');
-  if (oldPwd === newPwd)  return toast('Mật khẩu mới phải khác mật khẩu cũ', 'err');
-  try {
-    const { signInWithEmailAndPassword, updatePassword } = window._firebase;
-    const cred = await signInWithEmailAndPassword(window._auth, currentUser.email, oldPwd);
-    await updatePassword(cred.user, newPwd);
-    document.getElementById('admin-old-pwd').value = '';
-    document.getElementById('admin-new-pwd').value = '';
-    toast('✅ Đổi mật khẩu admin thành công!', 'ok');
-  } catch(e) {
-    toast(e.code==='auth/wrong-password'||e.code==='auth/invalid-credential'
-      ? '❌ Mật khẩu hiện tại không đúng!'
-      : '❌ ' + e.message, 'err');
-  }
-}
-
-function openAddStaffModal() {
-  openModal(`
-    <div class="modal" onclick="event.stopPropagation()">
-      <div class="modal-title"><h3>➕ Thêm nhân viên</h3>
-        <button class="modal-close" onclick="closeModal()">✕</button>
-      </div>
-      <div class="field"><label>Tên đăng nhập</label>
-        <div style="position:relative">
-          <input class="inp" id="su" placeholder="VD: nguyenvan" autocomplete="off">
-          <span class="login-suffix">${DOMAIN}</span>
+  <div class="container">
+    <div class="grid-2">
+      <!-- Add user form -->
+      <div class="card">
+        <h2>Thêm người dùng mới</h2>
+        <div class="field">
+          <label>Email</label>
+          <input id="newEmail" type="email" placeholder="user@example.com" />
         </div>
-      </div>
-      <div class="field"><label>Họ tên</label>
-        <input class="inp" id="sfn" placeholder="Nguyễn Văn A">
-      </div>
-      <div class="input-row">
-        <div class="field"><label>SĐT</label><input class="inp" id="s-phone" placeholder="0912345678"></div>
-        <div class="field"><label>Mật khẩu</label>
-          <input class="inp" type="password" id="sp" placeholder="Tối thiểu 6 ký tự" autocomplete="new-password">
+        <div class="field">
+          <label>Mật khẩu</label>
+          <input id="newPassword" type="text" placeholder="Tối thiểu 6 ký tự" />
         </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-outline btn-sm" onclick="closeModal()">Hủy</button>
-        <button class="btn btn-gold btn-sm" id="add-staff-btn" onclick="addStaff()">✅ Tạo tài khoản</button>
-      </div>
-    </div>`);
-}
-
-async function addStaff() {
-  let u       = document.getElementById('su').value.trim().toLowerCase();
-  const fn    = document.getElementById('sfn').value.trim();
-  const p     = document.getElementById('sp').value;
-  const phone = document.getElementById('s-phone').value.trim();
-  if (!u)           return toast('Nhập tên đăng nhập', 'err');
-  if (p.length < 6) return toast('Mật khẩu tối thiểu 6 ký tự', 'err');
-  if (!u.includes('@')) u += DOMAIN;
-  if (staffList.find(s => (s.email||'').toLowerCase() === u)) return toast('Tài khoản đã tồn tại', 'err');
-  const btn = document.getElementById('add-staff-btn');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ Đang tạo...'; }
-  try {
-    const { createUserWithEmailAndPassword, collection, addDoc } = window._firebase;
-    const secAuth = await getSecondaryAuth();
-    await createUserWithEmailAndPassword(secAuth, u, p);
-    await secAuth.signOut();
-    const ref = await addDoc(collection(window._db,'staff'), {
-      email: u, fullName: fn, phone, active: true, pwd: p,
-      createdAt: new Date().toISOString(), createdBy: currentUser.email
-    });
-    staffList.push({ id: ref.id, email: u, fullName: fn, phone, active: true, pwd: p });
-    closeModal(); toast(`✅ Đã tạo tài khoản: ${fn||loginName(u)}`, 'ok');
-    renderStaffList();
-  } catch(e) {
-    toast('❌ ' + (e.code==='auth/email-already-in-use' ? 'Tên đăng nhập đã tồn tại!' : e.message), 'err');
-    if (btn) { btn.disabled = false; btn.textContent = '✅ Tạo tài khoản'; }
-  }
-}
-
-function openEditStaff(id) {
-  const s = staffList.find(x => x.id === id);
-  if (!s) return;
-  openModal(`
-    <div class="modal" onclick="event.stopPropagation()">
-      <div class="modal-title"><h3>✏️ Sửa: ${escapeHTML(displayName(s.email))}</h3>
-        <button class="modal-close" onclick="closeModal()">✕</button>
-      </div>
-      <div class="field"><label>Họ tên</label>
-        <input class="inp" id="ef" value="${escapeHTML(s.fullName||'')}">
-      </div>
-      <div class="input-row">
-        <div class="field"><label>SĐT</label><input class="inp" id="e-phone" value="${escapeHTML(s.phone||'')}"></div>
-        <div class="field"><label>Mật khẩu mới (để trống nếu không đổi)</label>
-          <input class="inp" type="password" id="ep" placeholder="Tối thiểu 6 ký tự" autocomplete="new-password">
+        <div class="field">
+          <label>Tên hiển thị</label>
+          <input id="newDisplayName" type="text" placeholder="Nguyễn Văn A" />
         </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-outline btn-sm" onclick="closeModal()">Hủy</button>
-        <button class="btn btn-gold btn-sm" id="edit-staff-btn" onclick="saveEditStaff('${id}')">💾 Lưu</button>
-      </div>
-    </div>`);
-}
-
-async function saveEditStaff(id) {
-  const fn    = document.getElementById('ef').value.trim();
-  const np    = document.getElementById('ep').value;
-  const phone = document.getElementById('e-phone').value.trim();
-  if (np && np.length > 0 && np.length < 6) return toast('Mật khẩu tối thiểu 6 ký tự', 'err');
-  const s   = staffList.find(x => x.id === id); if (!s) return;
-  const btn = document.getElementById('edit-staff-btn');
-  const update = { fullName: fn, phone };
-  if (np && np.length >= 6) {
-    if (!s.pwd) return toast('Không tìm thấy mật khẩu cũ. Hãy xoá và tạo lại.', 'err');
-    if (btn) { btn.disabled = true; btn.textContent = '⏳ Đang đổi...'; }
-    try {
-      const { signInWithEmailAndPassword, updatePassword } = window._firebase;
-      const secAuth = await getSecondaryAuth();
-      const cred    = await signInWithEmailAndPassword(secAuth, s.email, s.pwd);
-      await updatePassword(cred.user, np);
-      await secAuth.signOut();
-      update.pwd = np;
-      await window._firebase.updateDoc(window._firebase.doc(window._db,'staff',id), update);
-      Object.assign(s, update);
-      closeModal(); toast('✅ Đã đổi mật khẩu thành công!', 'ok');
-      renderStaffList();
-    } catch(e) {
-      toast('❌ ' + (e.code==='auth/wrong-password'||e.code==='auth/invalid-credential'
-        ? 'Mật khẩu cũ không khớp. Hãy xoá và tạo lại.' : e.message), 'err');
-      if (btn) { btn.disabled = false; btn.textContent = '💾 Lưu'; }
-    }
-  } else {
-    await window._firebase.updateDoc(window._firebase.doc(window._db,'staff',id), update);
-    Object.assign(s, update);
-    closeModal(); toast('✅ Đã cập nhật', 'ok');
-    renderStaffList();
-  }
-}
-
-async function deactivateStaff(id, email) {
-  if (!confirm(`🚫 Khoá tài khoản "${displayName(email)}"?`)) return;
-  const e = (email||'').toLowerCase().trim();
-  const { doc, updateDoc, getDoc, setDoc } = window._firebase;
-  await updateDoc(doc(window._db,'staff',id), { active: false });
-  const disRef = doc(window._db,'config','disabled');
-  const snap   = await getDoc(disRef);
-  const cur    = snap.exists() ? (snap.data().emails||[]).map(x=>(x||'').toLowerCase().trim()) : [];
-  if (!cur.includes(e)) cur.push(e);
-  await setDoc(disRef, { emails: cur });
-  staffList = staffList.map(s => s.id===id ? {...s, active:false} : s);
-  toast(`✅ Đã khoá: ${displayName(email)}`, 'ok'); renderStaffList();
-}
-
-async function reactivateStaff(id, email) {
-  if (!confirm(`✅ Mở khoá tài khoản "${displayName(email)}"?`)) return;
-  const e = (email||'').toLowerCase().trim();
-  const { doc, updateDoc, getDoc, setDoc } = window._firebase;
-  await updateDoc(doc(window._db,'staff',id), { active: true });
-  const disRef = doc(window._db,'config','disabled');
-  const snap   = await getDoc(disRef);
-  if (snap.exists()) {
-    const cur = (snap.data().emails||[]).filter(x => (x||'').toLowerCase().trim() !== e);
-    await setDoc(disRef, { emails: cur });
-  }
-  staffList = staffList.map(s => s.id===id ? {...s, active:true} : s);
-  toast(`✅ Đã mở khoá: ${displayName(email)}`, 'ok'); renderStaffList();
-}
-
-async function deleteStaff(id, email) {
-  if (!confirm(`Xoá nhân viên "${displayName(email)}"? Không thể hoàn tác!`)) return;
-  await window._firebase.deleteDoc(window._firebase.doc(window._db,'staff',id));
-  staffList = staffList.filter(s => s.id !== id);
-  toast('Đã xoá', 'ok'); renderStaffList();
-}
-
-// ════════════════════════
-//   3️⃣ QUẢN LÝ XE
-// ════════════════════════
-function renderVehicles() {
-  document.getElementById('main').innerHTML = `
-    <div class="ph">
-      <div><h2 class="ph-title">Quản lý xe</h2><div class="ph-sub">${vehicleList.length} xe</div></div>
-      <button class="btn btn-gold btn-sm" onclick="openAddVehicleModal()">+ Thêm xe</button>
-    </div>
-    <div class="card">
-      <div id="vehicle-list-area"><div class="spinner"></div></div>
-    </div>`;
-  renderVehicleList();
-}
-
-function renderVehicleList() {
-  const area = document.getElementById('vehicle-list-area');
-  if (!area) return;
-  if (!vehicleList.length) { area.innerHTML = '<div class="empty">Chưa có xe nào</div>'; return; }
-  area.innerHTML = `<div class="tbl-wrap"><table>
-    <thead><tr><th>Biển số</th><th>Hãng xe</th><th>Loại</th><th>Màu</th><th>Tài xế phụ trách</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
-    <tbody>${vehicleList.map(v => {
-      const a = v.active !== false;
-      return `<tr style="${a?'':'opacity:.5'}">
-        <td><strong>${escapeHTML(v.plate||'—')}</strong></td>
-        <td>${escapeHTML(v.brand||'—')}</td>
-        <td>${escapeHTML(v.type||'—')}</td>
-        <td>${escapeHTML(v.color||'—')}</td>
-        <td>${escapeHTML(v.driverName||'—')}</td>
-        <td>${a ? '<span class="tag tag-green">✓ Hoạt động</span>' : '<span class="tag tag-red">✗ Ngừng</span>'}</td>
-        <td style="display:flex;gap:4px;flex-wrap:wrap">
-          <button class="btn btn-ghost btn-xs" onclick="openEditVehicle('${v.id}')">✏️</button>
-          ${a
-            ? `<button class="btn btn-red btn-xs" onclick="toggleVehicle('${v.id}',false)">Tắt</button>`
-            : `<button class="btn btn-green btn-xs" onclick="toggleVehicle('${v.id}',true)">Bật</button>`}
-          <button class="btn btn-red btn-xs" onclick="deleteVehicle('${v.id}')">🗑</button>
-        </td>
-      </tr>`;
-    }).join('')}</tbody></table></div>`;
-}
-
-function openAddVehicleModal(v=null) {
-  const isEdit = !!v;
-  openModal(`
-    <div class="modal" onclick="event.stopPropagation()">
-      <div class="modal-title"><h3>${isEdit?'✏️ Sửa xe':'➕ Thêm xe mới'}</h3>
-        <button class="modal-close" onclick="closeModal()">✕</button>
-      </div>
-      <div class="input-row">
-        <div class="field"><label>Biển số</label><input class="inp" id="v-plate" value="${escapeHTML(v?.plate||'')}" placeholder="51A-123.45"></div>
-        <div class="field"><label>Hãng xe</label><input class="inp" id="v-brand" value="${escapeHTML(v?.brand||'')}" placeholder="Honda, Toyota..."></div>
-      </div>
-      <div class="input-row">
-        <div class="field"><label>Loại xe</label>
-          <select class="inp" id="v-type">
-            ${['Xe máy','Xe 4 chỗ','Xe 7 chỗ'].map(t=>`<option ${v?.type===t?'selected':''}>${t}</option>`).join('')}
+        <div class="field">
+          <label>Vai trò</label>
+          <select id="newRole">
+            <option value="user">User</option>
+            <option value="admin">Admin</option>
           </select>
         </div>
-        <div class="field"><label>Màu sắc</label><input class="inp" id="v-color" value="${escapeHTML(v?.color||'')}" placeholder="Đen, Trắng..."></div>
-      </div>
-      <div class="field"><label>Tài xế phụ trách</label>
-        <select class="inp" id="v-driver">
-          <option value="">— Chưa gán —</option>
-          ${staffList.filter(s=>s.active!==false).map(s=>{
-            const nm = s.fullName||loginName(s.email);
-            return `<option value="${s.id}" data-name="${escapeHTML(nm)}" ${v?.driverId===s.id?'selected':''}>${escapeHTML(nm)}</option>`;
-          }).join('')}
-        </select>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-outline btn-sm" onclick="closeModal()">Hủy</button>
-        <button class="btn btn-gold btn-sm" onclick="${isEdit?`saveVehicle('${v.id}')`:'addVehicle()'}">${isEdit?'💾 Lưu':'✅ Thêm xe'}</button>
-      </div>
-    </div>`);
-}
-
-async function addVehicle() {
-  const plate = document.getElementById('v-plate').value.trim();
-  const brand = document.getElementById('v-brand').value.trim();
-  const type  = document.getElementById('v-type').value;
-  const color = document.getElementById('v-color').value.trim();
-  const sel   = document.getElementById('v-driver');
-  const driverId   = sel.value;
-  const driverName = sel.value ? sel.options[sel.selectedIndex].dataset.name : '';
-  if (!plate) return toast('Nhập biển số', 'err');
-  const ref = await window._firebase.addDoc(window._firebase.collection(window._db,'vehicles'), {
-    plate, brand, type, color, driverId: driverId||'', driverName: driverName||'',
-    active: true, createdAt: window._firebase.serverTimestamp()
-  });
-  vehicleList.push({ id: ref.id, plate, brand, type, color, driverId, driverName, active: true });
-  closeModal(); toast('✅ Đã thêm xe '+plate, 'ok'); renderVehicleList();
-}
-
-function openEditVehicle(id) {
-  const v = vehicleList.find(x => x.id === id);
-  if (v) openAddVehicleModal(v);
-}
-
-async function saveVehicle(id) {
-  const plate = document.getElementById('v-plate').value.trim();
-  const brand = document.getElementById('v-brand').value.trim();
-  const type  = document.getElementById('v-type').value;
-  const color = document.getElementById('v-color').value.trim();
-  const sel   = document.getElementById('v-driver');
-  const driverId   = sel.value;
-  const driverName = sel.value ? sel.options[sel.selectedIndex].dataset.name : '';
-  if (!plate) return toast('Nhập biển số', 'err');
-  const data = { plate, brand, type, color, driverId: driverId||'', driverName: driverName||'' };
-  await window._firebase.updateDoc(window._firebase.doc(window._db,'vehicles',id), data);
-  vehicleList = vehicleList.map(v => v.id===id ? {...v,...data} : v);
-  closeModal(); toast('✅ Đã cập nhật', 'ok'); renderVehicleList();
-}
-
-async function toggleVehicle(id, active) {
-  await window._firebase.updateDoc(window._firebase.doc(window._db,'vehicles',id), { active });
-  vehicleList = vehicleList.map(v => v.id===id ? {...v, active} : v);
-  toast(active ? 'Đã bật xe' : 'Đã tắt xe', 'ok'); renderVehicleList();
-}
-
-async function deleteVehicle(id) {
-  if (!confirm('Xoá xe này?')) return;
-  await window._firebase.deleteDoc(window._firebase.doc(window._db,'vehicles',id));
-  vehicleList = vehicleList.filter(v => v.id !== id);
-  toast('Đã xoá', 'ok'); renderVehicleList();
-}
-
-// ════════════════════════
-//   4️⃣ ĐẶT XE
-// ════════════════════════
-function renderBooking() {
-  const acts = Object.values(activeTrips);
-  document.getElementById('main').innerHTML = `
-    <div class="ph">
-      <div><h2 class="ph-title">${isAdmin ? 'Đặt xe' : 'Chuyến xe'}</h2><div class="ph-sub" id="bk-count">${acts.length} chuyến đang hoạt động</div></div>
-      ${isAdmin ? `<button class="btn btn-gold btn-sm" onclick="openCreateTripModal()">+ Tạo chuyến</button>` : ''}
-    </div>
-    <div class="tabs">
-      <div class="tab active" id="bk-tab-all"      onclick="filterBooking('all')">Tất cả</div>
-      <div class="tab"        id="bk-tab-pending"  onclick="filterBooking('pending')">⏳ Chờ xác nhận</div>
-      <div class="tab"        id="bk-tab-accepted" onclick="filterBooking('accepted')">✅ Đã nhận</div>
-      <div class="tab"        id="bk-tab-onride"   onclick="filterBooking('onride')">🚗 Đang chạy</div>
-    </div>
-    <div id="trip-grid-area"></div>`;
-  filterBooking('all');
-}
-
-function filterBooking(f) {
-  bookingFilter = f;
-  ['all','pending','accepted','onride'].forEach(k => {
-    const el = document.getElementById('bk-tab-'+k);
-    if (el) el.classList.toggle('active', k===f);
-  });
-  refreshTripGrid();
-}
-
-function refreshTripGrid() {
-  if (currentPage !== 'booking') return;
-  const area  = document.getElementById('trip-grid-area');
-  const count = document.getElementById('bk-count');
-  if (!area) return;
-  let trips = Object.values(activeTrips);
-  if (bookingFilter !== 'all') trips = trips.filter(t => t.status === bookingFilter);
-  trips.sort((a,b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
-  if (count) count.textContent = `${trips.length} chuyến${bookingFilter!=='all'?' ('+bookingFilter+')':''}`;
-  if (!trips.length) { area.innerHTML = `<div class="empty">Không có chuyến</div>`; return; }
-  area.innerHTML = `<div class="trip-grid">${trips.map(t => `
-    <div class="t-card ${t.status} ${currentTripId===t.id?'selected':''}" onclick="openTripDetail('${t.id}')">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:6px">
-        <strong style="font-size:14px">${escapeHTML(t.passengerName||t.customerName||'Khách')}</strong>
-        ${statusTag(t.status)}
-      </div>
-      <div style="font-size:12px;color:var(--text3);margin-bottom:6px">📞 ${escapeHTML(t.passengerPhone||t.customerPhone||'—')}</div>
-      <div style="font-size:12px;color:var(--green);margin-bottom:2px">📍 ${escapeHTML(t.pickup||'')}</div>
-      <div style="font-size:12px;color:var(--red)">🏁 ${escapeHTML(t.dropoff||'')}</div>
-      ${t.driverName ? `<div style="font-size:11px;color:var(--accent);margin-top:6px">🧑 ${escapeHTML(t.driverName)}</div>` : ''}
-      <div style="font-size:11px;color:var(--text3);margin-top:4px">🕒 ${fmtDate(t.createdAt)}</div>
-    </div>`).join('')}</div>`;
-}
-
-function openTripDetail(id) {
-  currentTripId = id;
-  renderTP(id);
-  document.getElementById('trip-panel').classList.add('open');
-}
-function closeTP() {
-  currentTripId = null;
-  document.getElementById('trip-panel').classList.remove('open');
-}
-
-function renderTP(id) {
-  const t = activeTrips[id];
-  if (!t) { closeTP(); return; }
-  document.getElementById('tp-title').textContent = t.passengerName||t.customerName||'Khách';
-  document.getElementById('tp-meta').textContent  = fmtDate(t.createdAt);
-  document.getElementById('tp-body').innerHTML = `
-    <div style="margin-bottom:14px">
-      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">Khách</div>
-      <div style="font-size:14px;font-weight:600">${escapeHTML(t.passengerName||t.customerName||'—')}</div>
-      <div style="font-size:13px;color:var(--text2);margin-top:3px">📞 ${escapeHTML(t.passengerPhone||t.customerPhone||'—')}</div>
-    </div>
-    <div class="divider"></div>
-    <div style="margin:14px 0">
-      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">Lộ trình</div>
-      <div style="background:var(--surface2);border-radius:8px;padding:10px;font-size:13px">
-        <div style="color:var(--green);margin-bottom:6px">📍 ${escapeHTML(t.pickup||'—')}</div>
-        <div style="color:var(--red)">🏁 ${escapeHTML(t.dropoff||'—')}</div>
-      </div>
-    </div>
-    <div class="divider"></div>
-    <div style="margin:14px 0;font-size:13px">
-      <div style="display:flex;justify-content:space-between;margin-bottom:6px">
-        <span style="color:var(--text3)">Loại xe</span><span>${escapeHTML(t.vehicleType||'—')}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;margin-bottom:6px">
-        <span style="color:var(--text3)">Khoảng cách</span><span>${t.distance ? t.distance+'km' : '—'}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between">
-        <span style="color:var(--text3)">Cước</span>
-        <span style="color:var(--accent);font-weight:700">${t.fare ? fmtMoney(t.fare) : 'Tính sau'}</span>
-      </div>
-      ${t.note ? `<div style="font-size:12px;color:var(--text3);margin-top:8px;padding:8px;background:var(--surface2);border-radius:6px">💬 ${escapeHTML(t.note)}</div>` : ''}
-    </div>
-    ${t.driverName ? `
-      <div class="divider"></div>
-      <div style="margin-top:14px;font-size:13px">🧑 Tài xế: <strong>${escapeHTML(t.driverName)}</strong></div>` : ''}
-    ${isAdmin && t.status === 'pending' ? `
-      <div class="divider"></div>
-      <div style="margin-top:14px">
-        <div class="field"><label>Giao cho nhân viên</label>
-          <select class="inp" id="tp-driver-sel">
-            <option value="">— Chọn nhân viên —</option>
-            ${staffList.filter(s=>s.active!==false).map(s=>{
-              const nm=s.fullName||loginName(s.email);
-              return `<option value="${s.id}" data-name="${escapeHTML(nm)}">${escapeHTML(nm)}</option>`;
-            }).join('')}
-          </select>
+        <div class="btn-row">
+          <button class="primary" id="btnAddUser">Thêm vào Auth + DB</button>
         </div>
-        <div class="field"><label>Cước (đ) — để trống nếu tính sau</label>
-          <input class="inp" id="tp-fare" type="number" value="${t.fare||''}" placeholder="0">
+        <div id="addStatus" class="status"></div>
+        <p class="hint">
+          Khi thêm: tạo trong <code>Firebase Auth</code> + ghi vào <code>/users/{uid}</code> trong Realtime DB.
+        </p>
+      </div>
+
+      <!-- Users list -->
+      <div>
+        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:12px;">
+          <h2 style="margin:0">Danh sách người dùng</h2>
+          <span class="hint" id="userCount"></span>
         </div>
-      </div>` : ''}`;
-
-  const foot = document.getElementById('tp-foot');
-  if (isAdmin) {
-    if (t.status === 'pending') {
-      foot.innerHTML = `
-        <button class="btn btn-gold btn-full" style="margin-bottom:8px" onclick="confirmTrip('${id}')">✅ Xác nhận & Giao tài xế</button>
-        <button class="btn btn-red btn-full" onclick="cancelTrip('${id}')">✕ Huỷ chuyến</button>`;
-    } else if (t.status === 'accepted') {
-      foot.innerHTML = `
-        <button class="btn btn-blue btn-full" style="margin-bottom:8px" onclick="startTrip('${id}')">🚗 Bắt đầu chạy</button>
-        <button class="btn btn-red btn-full" onclick="cancelTrip('${id}')">✕ Huỷ</button>`;
-    } else if (t.status === 'onride') {
-      foot.innerHTML = `
-        <button class="btn btn-green btn-full" style="margin-bottom:8px" onclick="completeTrip('${id}')">✔ Hoàn thành</button>
-        <button class="btn btn-red btn-full" onclick="cancelTrip('${id}')">✕ Huỷ</button>`;
-    } else foot.innerHTML = '';
-  } else {
-    if (t.status === 'accepted') {
-      foot.innerHTML = `
-        <button class="btn btn-gold btn-full" style="margin-bottom:8px" onclick="startTrip('${id}')">🚗 Bắt đầu chạy</button>
-        <button class="btn btn-red btn-full" onclick="cancelTrip('${id}')">✕ Huỷ</button>`;
-    } else if (t.status === 'onride') {
-      foot.innerHTML = `<button class="btn btn-green btn-full" onclick="completeTrip('${id}')">✔ Hoàn thành</button>`;
-    } else foot.innerHTML = '';
-  }
-}
-
-async function confirmTrip(id) {
-  const sel  = document.getElementById('tp-driver-sel');
-  const fare = parseInt(document.getElementById('tp-fare')?.value)||0;
-  if (!sel?.value) return toast('Chọn nhân viên để giao', 'err');
-  const driverName = sel.options[sel.selectedIndex].dataset.name;
-  await window._firebase.updateDoc(window._firebase.doc(window._db,'trips',id), {
-    status: 'accepted', driverId: sel.value, driverName,
-    fare: fare||null, acceptedAt: window._firebase.serverTimestamp()
-  });
-  toast('✅ Đã xác nhận & giao tài xế', 'ok');
-}
-
-async function startTrip(id) {
-  await window._firebase.updateDoc(window._firebase.doc(window._db,'trips',id), {
-    status: 'onride', startedAt: window._firebase.serverTimestamp()
-  });
-  toast('🚗 Bắt đầu chuyến!', 'ok');
-}
-
-async function completeTrip(id) {
-  if (!confirm('Xác nhận hoàn thành chuyến?')) return;
-  await window._firebase.updateDoc(window._firebase.doc(window._db,'trips',id), {
-    status: 'completed', completedAt: window._firebase.serverTimestamp()
-  });
-  closeTP(); toast('✔ Hoàn thành chuyến!', 'ok');
-}
-
-async function cancelTrip(id) {
-  if (!confirm('Huỷ chuyến này?')) return;
-  await window._firebase.updateDoc(window._firebase.doc(window._db,'trips',id), {
-    status: 'cancelled', cancelledAt: window._firebase.serverTimestamp()
-  });
-  closeTP(); toast('Đã huỷ chuyến', 'ok');
-}
-
-function openCreateTripModal() {
-  openModal(`
-    <div class="modal" onclick="event.stopPropagation()">
-      <div class="modal-title"><h3>➕ Tạo chuyến mới</h3>
-        <button class="modal-close" onclick="closeModal()">✕</button>
-      </div>
-      <div class="input-row">
-        <div class="field"><label>👤 Họ tên khách</label><input class="inp" id="ct-name" placeholder="Nguyễn Văn A"></div>
-        <div class="field"><label>📞 SĐT</label><input class="inp" id="ct-phone" placeholder="0912345678"></div>
-      </div>
-      <div class="field"><label>📍 Nơi đón</label><input class="inp" id="ct-pickup" placeholder="Địa chỉ đón..."></div>
-      <div class="field"><label>🏁 Điểm đến</label><input class="inp" id="ct-dropoff" placeholder="Địa chỉ đến..."></div>
-      <div class="input-row">
-        <div class="field"><label>Loại xe</label>
-          <select class="inp" id="ct-type"><option>Xe máy</option><option>Xe 4 chỗ</option><option>Xe 7 chỗ</option></select>
+        <div class="users-list" id="usersList">
+          <div class="empty">Đang tải...</div>
         </div>
-        <div class="field"><label>Cước (đ)</label><input class="inp" id="ct-fare" type="number" placeholder="0"></div>
-      </div>
-      <div class="field"><label>Giao ngay cho nhân viên</label>
-        <select class="inp" id="ct-driver">
-          <option value="">— Chờ phân công sau —</option>
-          ${staffList.filter(s=>s.active!==false).map(s=>{
-            const nm=s.fullName||loginName(s.email);
-            return `<option value="${s.id}" data-name="${escapeHTML(nm)}">${escapeHTML(nm)}</option>`;
-          }).join('')}
-        </select>
-      </div>
-      <div class="field"><label>Ghi chú</label><input class="inp" id="ct-note" placeholder="Ghi chú..."></div>
-      <div class="modal-footer">
-        <button class="btn btn-outline btn-sm" onclick="closeModal()">Hủy</button>
-        <button class="btn btn-gold btn-sm" onclick="createTrip()">✅ Tạo</button>
-      </div>
-    </div>`);
-}
-
-async function createTrip() {
-  const name  = document.getElementById('ct-name').value.trim();
-  const phone = document.getElementById('ct-phone').value.trim();
-  const pick  = document.getElementById('ct-pickup').value.trim();
-  const drop  = document.getElementById('ct-dropoff').value.trim();
-  const type  = document.getElementById('ct-type').value;
-  const fare  = parseInt(document.getElementById('ct-fare').value)||null;
-  const note  = document.getElementById('ct-note').value.trim();
-  const sel   = document.getElementById('ct-driver');
-  const dId   = sel.value;
-  const dName = sel.value ? sel.options[sel.selectedIndex].dataset.name : '';
-  if (!name || !phone || !pick || !drop) return toast('Điền đầy đủ thông tin', 'err');
-  await window._firebase.addDoc(window._firebase.collection(window._db,'trips'), {
-    passengerName: name, passengerPhone: phone,
-    customerName: name, customerPhone: phone, customerId: 'admin',
-    pickup: pick, dropoff: drop, vehicleType: type, fare, note: note||'',
-    status: dId ? 'accepted' : 'pending',
-    driverId: dId||null, driverName: dName||null,
-    createdAt: window._firebase.serverTimestamp(),
-    acceptedAt: dId ? window._firebase.serverTimestamp() : null,
-    createdBy: 'admin'
-  });
-  closeModal(); toast('✅ Đã tạo chuyến!', 'ok');
-}
-
-// ════════════════════════
-//   5️⃣ LỊCH SỬ
-// ════════════════════════
-function renderHistory() {
-  document.getElementById('main').innerHTML = `
-    <div class="ph">
-      <div><h2 class="ph-title">Lịch sử</h2></div>
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-ghost btn-sm" onclick="loadHistory()">🔄 Làm mới</button>
-        ${isAdmin ? `<button class="btn btn-red btn-sm" onclick="confirmClearHistory()">🗑 Xoá lịch sử</button>` : ''}
       </div>
     </div>
-    <div class="filter-bar">
-      <div class="field" style="margin:0;flex:1;min-width:120px">
-        <label>Từ ngày</label><input class="inp" type="date" id="flt-from">
-      </div>
-      <div class="field" style="margin:0;flex:1;min-width:120px">
-        <label>Đến ngày</label><input class="inp" type="date" id="flt-to">
-      </div>
-      <div class="field" style="margin:0;flex:1;min-width:120px">
-        <label>Trạng thái</label>
-        <select class="inp" id="flt-status">
-          <option value="">Tất cả</option>
-          <option value="completed">Hoàn thành</option>
-          <option value="cancelled">Đã huỷ</option>
-        </select>
-      </div>
-      ${isAdmin ? `
-      <div class="field" style="margin:0;flex:1;min-width:140px">
-        <label>Nhân viên</label>
-        <select class="inp" id="flt-driver">
-          <option value="">Tất cả</option>
-          ${staffList.map(s=>`<option value="${s.id}">${escapeHTML(s.fullName||loginName(s.email))}</option>`).join('')}
-        </select>
-      </div>` : ''}
-      <button class="btn btn-gold btn-sm" onclick="loadHistory()">🔍 Lọc</button>
-      <button class="btn btn-ghost btn-sm" onclick="clearFilter()">✕ Xoá lọc</button>
+  </div>
+</div>
+
+<!-- ============ NORMAL USER VIEW ============ -->
+<div id="userView" hidden>
+  <div class="topbar">
+    <div class="brand">
+      <span class="brand-dot" style="background:var(--info); box-shadow:0 0 12px var(--info)"></span>
+      <span>My App</span>
     </div>
-    <div id="hist-area"><div class="spinner"></div></div>`;
-  loadHistory();
-}
-
-async function loadHistory() {
-  const area = document.getElementById('hist-area');
-  if (!area) return;
-  area.innerHTML = '<div class="spinner"></div>';
-  try {
-    const { collection, getDocs, query, where } = window._firebase;
-    const snap = await getDocs(query(collection(window._db,'trips'), where('status','in',['completed','cancelled'])));
-    let trips  = snap.docs.map(d=>({id:d.id,...d.data()}));
-
-    const from     = document.getElementById('flt-from')?.value;
-    const to       = document.getElementById('flt-to')?.value;
-    const status   = document.getElementById('flt-status')?.value;
-    const driverId = document.getElementById('flt-driver')?.value;
-    if (from)     { const d=new Date(from); trips=trips.filter(t=>{ const at=t.createdAt?.toDate?t.createdAt.toDate():new Date(0); return at>=d; }); }
-    if (to)       { const d=new Date(to); d.setHours(23,59,59); trips=trips.filter(t=>{ const at=t.createdAt?.toDate?t.createdAt.toDate():new Date(0); return at<=d; }); }
-    if (status)   trips = trips.filter(t => t.status === status);
-    if (driverId) trips = trips.filter(t => t.driverId === driverId);
-    if (!isAdmin) trips = trips.filter(t => t.driverId === currentUser?.uid);
-    trips.sort((a,b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
-
-    if (!trips.length) { area.innerHTML='<div class="empty">Không có dữ liệu</div>'; return; }
-    const total = trips.filter(t=>t.status==='completed').reduce((s,t)=>s+(t.fare||0),0);
-    area.innerHTML = `
-      <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;font-size:13px">
-        <span>📊 <strong>${trips.length}</strong> chuyến</span>
-        <span>💰 Tổng thu: <strong style="color:var(--accent)">${fmtMoney(total)}</strong></span>
+    <div style="display:flex; align-items:center; gap:12px;">
+      <div class="user-pill">
+        <span class="role-badge user">User</span>
+        <span id="userEmailLabel"></span>
       </div>
-      ${trips.map((t,idx) => {
-        const elId = 'h_'+idx;
-        const col  = t.status==='completed' ? 'var(--green)' : 'var(--red)';
-        return `<div class="hist-item" style="border-left:3px solid ${col}">
-          <div class="hist-head" onclick="toggleFolder('${elId}')">
-            <div style="flex:1;min-width:0">
-              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-                <span style="font-weight:700">👤 ${escapeHTML(t.passengerName||t.customerName||'—')}</span>
-                ${statusTag(t.status)}
-                ${t.fare ? `<span style="font-weight:700;color:var(--accent2)">${fmtMoney(t.fare)}</span>` : ''}
-              </div>
-              <div style="font-size:11px;color:var(--text3);margin-top:2px">${fmtDate(t.createdAt)}</div>
-            </div>
-            <span id="fa-${elId}" style="color:var(--text3);font-size:16px">▶</span>
-          </div>
-          <div class="hist-body" id="${elId}">
-            <div style="font-size:13px;margin-bottom:8px">
-              <div style="color:var(--green);margin-bottom:4px">📍 ${escapeHTML(t.pickup||'—')}</div>
-              <div style="color:var(--red)">🏁 ${escapeHTML(t.dropoff||'—')}</div>
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;color:var(--text2)">
-              <div>📞 ${escapeHTML(t.passengerPhone||t.customerPhone||'—')}</div>
-              <div>🚗 ${escapeHTML(t.vehicleType||'—')}</div>
-              <div>🧑 ${escapeHTML(t.driverName||'—')}</div>
-              <div>💰 ${t.fare ? fmtMoney(t.fare) : '—'}</div>
-            </div>
-            ${t.note ? `<div style="font-size:12px;color:var(--text3);margin-top:8px;padding:6px 8px;background:var(--surface3);border-radius:6px">💬 ${escapeHTML(t.note)}</div>` : ''}
-          </div>
-        </div>`;
-      }).join('')}`;
-  } catch(e) { area.innerHTML=`<div class="empty">Lỗi: ${e.message}</div>`; }
-}
+      <button class="ghost" id="btnLogoutUser">Đăng xuất</button>
+    </div>
+  </div>
 
-function toggleFolder(id) {
-  const body = document.getElementById(id);
-  const icon = document.getElementById('fa-'+id);
-  if (!body) return;
-  const open = body.classList.toggle('open');
-  if (icon) icon.textContent = open ? '▼' : '▶';
-}
+  <div class="container">
+    <div class="card">
+      <h2>Xin chào <span id="userDisplayName">bạn</span> 👋</h2>
+      <p class="subtitle">Đây là khu vực dành cho user thường. Admin có thể thêm tính năng tại đây sau.</p>
+      <div id="userInfo" class="hint"></div>
+    </div>
+  </div>
+</div>
 
-function clearFilter() {
-  ['flt-from','flt-to','flt-status','flt-driver'].forEach(id => {
-    const el = document.getElementById(id); if (el) el.value = '';
-  });
-  loadHistory();
-}
+<!-- ============ EDIT MODAL ============ -->
+<div id="editModal" class="modal-backdrop" hidden>
+  <div class="modal">
+    <h2>Chỉnh sửa người dùng</h2>
+    <input type="hidden" id="editUid" />
+    <div class="field">
+      <label>Email <span class="hint">(không đổi được)</span></label>
+      <input id="editEmail" type="email" disabled />
+    </div>
+    <div class="field">
+      <label>Tên hiển thị</label>
+      <input id="editDisplayName" type="text" />
+    </div>
+    <div class="field">
+      <label>Vai trò</label>
+      <select id="editRole">
+        <option value="user">User</option>
+        <option value="admin">Admin</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Trạng thái</label>
+      <select id="editDisabled">
+        <option value="false">Hoạt động</option>
+        <option value="true">Khóa (sẽ bị đá ra khi login)</option>
+      </select>
+    </div>
+    <div class="btn-row">
+      <button class="ghost" id="btnEditCancel">Hủy</button>
+      <button class="primary" id="btnEditSave">Lưu thay đổi</button>
+    </div>
+    <div id="editStatus" class="status"></div>
+  </div>
+</div>
 
-async function confirmClearHistory() {
-  if (!confirm('XOÁ TOÀN BỘ lịch sử chuyến? Không thể hoàn tác!')) return;
-  if (!confirm('Xác nhận lần 2: Bạn thực sự muốn xoá tất cả?')) return;
-  toast('Đang xoá...', 'info');
-  const { collection, getDocs, query, where, doc, deleteDoc } = window._firebase;
-  const snap = await getDocs(query(collection(window._db,'trips'), where('status','in',['completed','cancelled'])));
-  await Promise.all(snap.docs.map(d => deleteDoc(doc(window._db,'trips',d.id))));
-  toast('Đã xoá lịch sử', 'ok'); loadHistory();
-}
+<!-- ============ FIREBASE LOGIC ============ -->
+<script type="module">
+  import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import {
+    getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword,
+    signOut, onAuthStateChanged
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import {
+    getDatabase, ref, set, get, update, remove, onValue
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-// ════════════════════════
-//   6️⃣ CÀI ĐẶT
-// ════════════════════════
-function renderSettings() {
-  document.getElementById('main').innerHTML = `
-    <div class="ph"><div><h2 class="ph-title">Cài đặt</h2></div></div>
-    <div class="card" style="max-width:500px">
-      <div class="card-title">⚙️ Cài đặt ứng dụng</div>
-      <div class="field"><label>Tên ứng dụng</label><input class="inp" id="cfg-name" value="${escapeHTML(appConfig.name||'GrapApp')}"></div>
-      <div class="field"><label>Địa chỉ / Mô tả</label><input class="inp" id="cfg-addr" value="${escapeHTML(appConfig.address||'')}"></div>
-      <div class="field"><label>SĐT liên hệ</label><input class="inp" id="cfg-phone" value="${escapeHTML(appConfig.phone||'')}"></div>
-      <div class="input-row">
-        <div class="field"><label>Cước cơ bản (đ)</label><input class="inp" id="cfg-base" type="number" value="${appConfig.fareBase||10000}"></div>
-        <div class="field"><label>Cước / km (đ)</label><input class="inp" id="cfg-km" type="number" value="${appConfig.farePerKm||8000}"></div>
-      </div>
-      <div class="field"><label>Domain nhân viên</label><input class="inp" value="${DOMAIN}" readonly style="opacity:.5"></div>
-      <div class="field"><label>Email admin</label><input class="inp" value="${ADMIN_EMAIL}" readonly style="opacity:.5"></div>
-      <button class="btn btn-gold" onclick="saveSettings()">💾 Lưu cài đặt</button>
-    </div>`;
-}
-
-async function saveSettings() {
-  const cfg = {
-    name:      document.getElementById('cfg-name').value.trim()||'GrapApp',
-    address:   document.getElementById('cfg-addr').value.trim(),
-    phone:     document.getElementById('cfg-phone').value.trim(),
-    fareBase:  parseInt(document.getElementById('cfg-base').value)||10000,
-    farePerKm: parseInt(document.getElementById('cfg-km').value)||8000,
+  // ⚠️ Cần databaseURL để dùng Realtime Database. Bạn check Firebase Console.
+  const firebaseConfig = {
+    apiKey: "AIzaSyBVJu34eNs5_h5o33tUdPqyuxOx-SU-NGc",
+    authDomain: "grap-377f7.firebaseapp.com",
+    databaseURL: "https://grap-377f7-default-rtdb.firebaseio.com",
+    projectId: "grap-377f7",
+    storageBucket: "grap-377f7.firebasestorage.app",
+    messagingSenderId: "523295120957",
+    appId: "1:523295120957:web:8bd84167a87ef4b12b9454",
+    measurementId: "G-4VXZSQ9EB5"
   };
-  await window._firebase.setDoc(window._firebase.doc(window._db,'config','app'), cfg);
-  Object.assign(appConfig, cfg);
-  document.getElementById('sb-sub').textContent = cfg.address || 'Quản lý đặt xe';
-  toast('✅ Đã lưu cài đặt', 'ok');
-}
 
-// ════════════════════════
-//   GUEST (Khách đặt xe)
-// ════════════════════════
-function renderGuestPage() {
-  document.getElementById('guest-body').innerHTML = `
-    <div style="margin-bottom:20px">
-      <h2 style="font-size:20px;color:var(--cream);margin-bottom:4px">Đặt xe</h2>
-      <div style="font-size:12px;color:var(--text3)">Điền thông tin để đặt chuyến</div>
-    </div>
-    <div id="g-current"></div>
-    <div class="card" id="g-form">
-      <div class="input-row">
-        <div class="field"><label>👤 Họ tên</label><input class="inp" id="g-name" placeholder="Nguyễn Văn A"></div>
-        <div class="field"><label>📞 SĐT</label><input class="inp" id="g-phone" placeholder="0912345678"></div>
-      </div>
-      <div class="field"><label>📍 Nơi đón</label><input class="inp" id="g-pickup" placeholder="Số nhà, tên đường..."></div>
-      <div class="field"><label>🏁 Điểm đến</label><input class="inp" id="g-dropoff" placeholder="Nhập điểm đến..."></div>
-      <div class="input-row">
-        <div class="field"><label>Loại xe</label>
-          <select class="inp" id="g-type" onchange="gUpdateFare()"><option>Xe máy</option><option>Xe 4 chỗ</option><option>Xe 7 chỗ</option></select>
-        </div>
-        <div class="field"><label>Khoảng cách (km)</label>
-          <input class="inp" id="g-dist" type="number" min="0.1" step="0.5" placeholder="vd: 3.5" oninput="gUpdateFare()">
-        </div>
-      </div>
-      <div id="g-fare-preview" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:14px">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <span style="font-size:13px;color:var(--text2)">Cước ước tính</span>
-          <span style="font-size:20px;font-weight:700;color:var(--accent2)" id="g-fare-amt">—</span>
-        </div>
-      </div>
-      <div class="field"><label>Ghi chú</label><input class="inp" id="g-note" placeholder="Ghi chú cho tài xế..."></div>
-      <button class="btn btn-gold btn-full" onclick="gBookRide()">🚗 Đặt xe ngay</button>
-    </div>`;
-}
+  const ADMIN_EMAIL = "admin@myapp.com";
 
-function gUpdateFare() {
-  const dist = parseFloat(document.getElementById('g-dist')?.value)||0;
-  const type = document.getElementById('g-type')?.value||'Xe máy';
-  const mult = type==='Xe máy'?1:type==='Xe 4 chỗ'?1.5:2;
-  const prev = document.getElementById('g-fare-preview');
-  if (dist > 0 && prev) {
-    const fare = Math.round(((appConfig.fareBase||10000)+(appConfig.farePerKm||8000)*dist)*mult);
-    prev.style.display='block';
-    document.getElementById('g-fare-amt').textContent = fmtMoney(fare);
-  } else if (prev) prev.style.display='none';
-}
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getDatabase(app);
 
-let gUnsub = null;
-async function gBookRide() {
-  const name   = document.getElementById('g-name').value.trim();
-  const phone  = document.getElementById('g-phone').value.trim();
-  const pickup = document.getElementById('g-pickup').value.trim();
-  const drop   = document.getElementById('g-dropoff').value.trim();
-  const type   = document.getElementById('g-type').value;
-  const dist   = parseFloat(document.getElementById('g-dist').value)||0;
-  const note   = document.getElementById('g-note').value.trim();
-  if (!name)          return toast('Nhập họ tên', 'err');
-  if (!phone)         return toast('Nhập số điện thoại', 'err');
-  if (!pickup||!drop) return toast('Nhập điểm đón và điểm đến', 'err');
-  const mult = type==='Xe máy'?1:type==='Xe 4 chỗ'?1.5:2;
-  const fare = dist>0 ? Math.round(((appConfig.fareBase||10000)+(appConfig.farePerKm||8000)*dist)*mult) : null;
-  const ref = await window._firebase.addDoc(window._firebase.collection(window._db,'trips'), {
-    passengerName: name, passengerPhone: phone,
-    customerName: name, customerPhone: phone, customerId: 'guest_'+Date.now(),
-    pickup, dropoff: drop, vehicleType: type,
-    distance: dist||null, fare, note: note||'',
-    status: 'pending', createdAt: window._firebase.serverTimestamp(),
-    driverId: null, driverName: null
+  // ===== State =====
+  let currentUser = null;
+  let currentUserData = null;
+  let bootstrapMode = false; // Đang ở chế độ đăng ký admin
+
+  // ===== Helper: hiện status =====
+  function showStatus(elId, msg, type = 'info') {
+    const el = document.getElementById(elId);
+    el.className = 'status ' + type;
+    el.textContent = msg;
+  }
+  function clearStatus(elId) {
+    const el = document.getElementById(elId);
+    el.textContent = '';
+  }
+
+  // ===== Helper: switch view =====
+  function showView(viewId) {
+    ['loginView', 'adminView', 'userView'].forEach(id => {
+      document.getElementById(id).hidden = (id !== viewId);
+    });
+  }
+
+  // ===== Toggle bootstrap admin mode =====
+  document.getElementById('toggleBootstrap').addEventListener('click', () => {
+    bootstrapMode = !bootstrapMode;
+    if (bootstrapMode) {
+      document.getElementById('loginTitle').textContent = 'Đăng ký admin';
+      document.getElementById('loginSubtitle').textContent = 'Tạo tài khoản admin@myapp.com lần đầu';
+      document.getElementById('loginEmail').value = ADMIN_EMAIL;
+      document.getElementById('btnLogin').textContent = 'Đăng ký admin';
+      document.getElementById('toggleBootstrap').textContent = '← Quay lại đăng nhập';
+    } else {
+      document.getElementById('loginTitle').textContent = 'Đăng nhập';
+      document.getElementById('loginSubtitle').textContent = 'Hệ thống quản lý người dùng';
+      document.getElementById('loginEmail').value = '';
+      document.getElementById('btnLogin').textContent = 'Đăng nhập';
+      document.getElementById('toggleBootstrap').textContent = 'Đăng ký admin lần đầu →';
+    }
+    clearStatus('loginStatus');
   });
-  toast('🎉 Đặt xe thành công! Đang chờ xác nhận...', 'ok');
-  document.getElementById('g-form').style.display = 'none';
-  gListenTrip(ref.id, phone);
-}
 
-function gListenTrip(id, phone) {
-  if (gUnsub) { gUnsub(); gUnsub = null; }
-  gUnsub = window._firebase.onSnapshot(window._firebase.doc(window._db,'trips',id), snap => {
-    if (!snap.exists()) return;
-    const t   = { id: snap.id, ...snap.data() };
-    const col = { pending:'var(--orange)', accepted:'var(--blue)', onride:'var(--green)', completed:'var(--green)', cancelled:'var(--red)' };
-    const msg = { pending:'⏳ Đang chờ xác nhận...', accepted:'✅ Tài xế đang đến đón!', onride:'🚗 Bạn đang trên xe!', completed:'✔ Hoàn thành!', cancelled:'✕ Chuyến đã bị huỷ' };
-    const cur = document.getElementById('g-current');
-    if (!cur) return;
-    const canCancel = (t.status==='accepted' || t.status==='onride');
-    cur.innerHTML = `
-      <div class="card" style="border:2px solid ${col[t.status]||'var(--border)'}">
-        <div style="text-align:center;padding:8px 0 12px">
-          <div style="font-size:20px;margin-bottom:6px">${msg[t.status]||''}</div>
-          ${statusTag(t.status)}
-        </div>
-        <div style="font-size:13px;margin-bottom:10px">
-          <div style="color:var(--green);margin-bottom:4px">📍 ${escapeHTML(t.pickup||'')}</div>
-          <div style="color:var(--red)">🏁 ${escapeHTML(t.dropoff||'')}</div>
-        </div>
-        ${t.driverName ? `<div style="background:var(--surface2);border-radius:8px;padding:10px;margin-bottom:10px;font-size:13px">
-          <div style="font-weight:600;color:var(--cream)">🧑 ${escapeHTML(t.driverName)}</div>
-        </div>` : ''}
-        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:10px">
-          <span style="color:var(--text3)">Cước</span>
-          <span style="color:var(--accent);font-weight:700">${t.fare ? fmtMoney(t.fare) : 'Tính sau'}</span>
-        </div>
-        ${t.status==='pending'
-          ? `<button class="btn btn-outline btn-sm btn-full" onclick="gCancelFree('${t.id}')">Huỷ chuyến</button>`
-          : canCancel
-            ? `<button class="btn btn-red btn-sm btn-full" onclick="gOpenCancelVerify('${t.id}','${phone}')">🔒 Yêu cầu huỷ</button>
-               <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:6px">⚠️ Chuyến đã xác nhận — cần nhập SĐT để huỷ</div>`
-            : t.status==='completed'||t.status==='cancelled'
-              ? `<button class="btn btn-gold btn-full btn-sm" onclick="gNewTrip()">🚗 Đặt chuyến mới</button>` : ''}
-      </div>`;
-    if (t.status==='completed' || t.status==='cancelled') { if(gUnsub){gUnsub();gUnsub=null;} }
+  // ===== Login button =====
+  document.getElementById('btnLogin').addEventListener('click', async () => {
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    if (!email || !password) {
+      showStatus('loginStatus', 'Vui lòng nhập email và mật khẩu', 'error');
+      return;
+    }
+
+    const btn = document.getElementById('btnLogin');
+    btn.disabled = true;
+    clearStatus('loginStatus');
+
+    try {
+      if (bootstrapMode) {
+        // Đăng ký admin lần đầu
+        if (email !== ADMIN_EMAIL) {
+          throw new Error(`Chỉ cho phép đăng ký ${ADMIN_EMAIL}`);
+        }
+        const cred = await createUserWithEmailAndPassword(auth, email, password);
+        // Tạo bản ghi DB cho admin
+        await set(ref(db, `users/${cred.user.uid}`), {
+          uid: cred.user.uid,
+          email: email,
+          displayName: 'Super Admin',
+          role: 'admin',
+          createdAt: Date.now(),
+          disabled: false
+        });
+        // onAuthStateChanged sẽ tự xử lý chuyển view
+      } else {
+        await signInWithEmailAndPassword(auth, email, password);
+        // onAuthStateChanged xử lý phần còn lại (check 2 nơi)
+      }
+    } catch (err) {
+      console.error(err);
+      showStatus('loginStatus', 'Lỗi: ' + (err.message || err.code), 'error');
+      btn.disabled = false;
+    }
   });
-}
 
-async function gCancelFree(id) {
-  if (!confirm('Huỷ chuyến?')) return;
-  await window._firebase.updateDoc(window._firebase.doc(window._db,'trips',id), { status:'cancelled' });
-  toast('Đã huỷ chuyến', 'ok');
-}
+  // ===== Logout =====
+  function doLogout() { signOut(auth); }
+  document.getElementById('btnLogout').addEventListener('click', doLogout);
+  document.getElementById('btnLogoutUser').addEventListener('click', doLogout);
 
-function gOpenCancelVerify(tripId, correctPhone) {
-  openModal(`
-    <div class="modal" style="max-width:360px" onclick="event.stopPropagation()">
-      <div class="modal-title">🔒 Xác nhận huỷ<button class="modal-close" onclick="closeModal()">✕</button></div>
-      <div style="font-size:13px;color:var(--text2);margin-bottom:16px">Nhập lại <strong>số điện thoại</strong> đã đặt để xác nhận huỷ.</div>
-      <div class="field"><label>Số điện thoại</label>
-        <input class="inp" id="g-cancel-phone" type="tel" placeholder="Nhập SĐT...">
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-ghost btn-sm" onclick="closeModal()">Đóng</button>
-        <button class="btn btn-red btn-sm" onclick="gDoVerifyCancel('${tripId}','${correctPhone}')">Xác nhận huỷ</button>
-      </div>
-    </div>`);
-}
+  // ===== onAuthStateChanged: TRÁI TIM CỦA HỆ THỐNG BẢO MẬT =====
+  // Mỗi lần auth thay đổi, check ở DB. Nếu không khớp → đá ra ngay.
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      currentUser = null;
+      currentUserData = null;
+      detachUsersListener();
+      showView('loginView');
+      document.getElementById('btnLogin').disabled = false;
+      document.getElementById('loginPassword').value = '';
+      return;
+    }
 
-async function gDoVerifyCancel(id, correct) {
-  const entered = document.getElementById('g-cancel-phone').value.trim();
-  const clean   = s => s.replace(/[\s\-\+\.]/g,'');
-  if (clean(entered) !== clean(correct)) { toast('❌ Số điện thoại không khớp!', 'err'); return; }
-  await window._firebase.updateDoc(window._firebase.doc(window._db,'trips',id), {
-    status:'cancelled', cancelledAt: window._firebase.serverTimestamp()
+    // === KIỂM TRA 2 NƠI ===
+    try {
+      const snap = await get(ref(db, `users/${user.uid}`));
+
+      // Trường hợp đặc biệt: admin@myapp.com vừa bootstrap xong → DB chưa có thì sẽ có ngay
+      // Còn lại nếu không tồn tại trong DB → ĐÁ
+      if (!snap.exists()) {
+        showStatus('loginStatus', '⛔ Tài khoản tồn tại trong Auth nhưng KHÔNG có trong DB. Đã đăng xuất.', 'error');
+        await signOut(auth);
+        return;
+      }
+
+      const data = snap.val();
+
+      // Check email khớp
+      if (data.email !== user.email) {
+        showStatus('loginStatus', '⛔ Email trong DB không khớp với Auth. Đã đăng xuất.', 'error');
+        await signOut(auth);
+        return;
+      }
+
+      // Check disabled
+      if (data.disabled === true) {
+        showStatus('loginStatus', '⛔ Tài khoản đã bị khóa.', 'error');
+        await signOut(auth);
+        return;
+      }
+
+      // OK!
+      currentUser = user;
+      currentUserData = data;
+
+      if (user.email === ADMIN_EMAIL || data.role === 'admin') {
+        renderAdminView();
+      } else {
+        renderUserView();
+      }
+    } catch (err) {
+      console.error('Lỗi check DB:', err);
+      showStatus('loginStatus', 'Lỗi kết nối DB: ' + err.message, 'error');
+      await signOut(auth);
+    }
   });
-  closeModal(); toast('Đã huỷ chuyến', 'ok');
-}
 
-function gNewTrip() {
-  if (gUnsub) { gUnsub(); gUnsub=null; }
-  renderGuestPage();
-}
+  // ===== Admin view =====
+  let usersListenerOff = null;
+  function detachUsersListener() {
+    if (usersListenerOff) { usersListenerOff(); usersListenerOff = null; }
+  }
+
+  function renderAdminView() {
+    document.getElementById('adminEmailLabel').textContent = currentUser.email;
+    showView('adminView');
+
+    // Listen realtime cho danh sách users
+    detachUsersListener();
+    const usersRef = ref(db, 'users');
+    usersListenerOff = onValue(usersRef, (snap) => {
+      const all = snap.val() || {};
+      renderUsersList(all);
+    });
+  }
+
+  function renderUsersList(usersObj) {
+    const list = document.getElementById('usersList');
+    const arr = Object.values(usersObj).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    document.getElementById('userCount').textContent = arr.length + ' tài khoản';
+
+    if (arr.length === 0) {
+      list.innerHTML = '<div class="empty">Chưa có người dùng nào</div>';
+      return;
+    }
+
+    let html = `
+      <div class="user-row header">
+        <div>Người dùng</div>
+        <div>Email / UID</div>
+        <div>Vai trò</div>
+        <div></div>
+      </div>
+    `;
+    for (const u of arr) {
+      const isAdmin = u.role === 'admin';
+      const disabledTag = u.disabled ? '<span class="disabled-tag">KHÓA</span>' : '';
+      const isMe = u.uid === currentUser.uid;
+      html += `
+        <div class="user-row">
+          <div>
+            <div class="user-name">${escapeHtml(u.displayName || '—')} ${disabledTag}</div>
+          </div>
+          <div>
+            <div class="user-email">${escapeHtml(u.email)}</div>
+            <div class="uid-mono">${escapeHtml(u.uid)}</div>
+          </div>
+          <div>
+            <span class="role-badge ${isAdmin ? '' : 'user'}">${isAdmin ? 'Admin' : 'User'}</span>
+          </div>
+          <div class="actions">
+            <button data-edit="${u.uid}">Sửa</button>
+            <button class="danger" data-delete="${u.uid}" ${isMe ? 'disabled title="Không thể xóa chính mình"' : ''}>Xóa</button>
+          </div>
+        </div>
+      `;
+    }
+    list.innerHTML = html;
+
+    // Bind edit/delete buttons
+    list.querySelectorAll('[data-edit]').forEach(btn => {
+      btn.addEventListener('click', () => openEditModal(usersObj[btn.dataset.edit]));
+    });
+    list.querySelectorAll('[data-delete]').forEach(btn => {
+      btn.addEventListener('click', () => deleteUser(usersObj[btn.dataset.delete]));
+    });
+  }
+
+  function escapeHtml(s) {
+    return String(s ?? '').replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+
+  // ===== Add user (dùng secondary app để admin không bị đăng xuất) =====
+  document.getElementById('btnAddUser').addEventListener('click', async () => {
+    const email = document.getElementById('newEmail').value.trim();
+    const password = document.getElementById('newPassword').value;
+    const displayName = document.getElementById('newDisplayName').value.trim();
+    const role = document.getElementById('newRole').value;
+
+    if (!email || !password) {
+      showStatus('addStatus', 'Cần nhập email và mật khẩu', 'error');
+      return;
+    }
+    if (password.length < 6) {
+      showStatus('addStatus', 'Mật khẩu tối thiểu 6 ký tự (yêu cầu của Firebase)', 'error');
+      return;
+    }
+
+    const btn = document.getElementById('btnAddUser');
+    btn.disabled = true;
+    showStatus('addStatus', '⏳ Đang tạo trong Auth và DB...', 'info');
+
+    // Secondary app: tạo user mà không ảnh hưởng admin đang login
+    const secondaryName = 'Secondary_' + Date.now();
+    const secondaryApp = initializeApp(firebaseConfig, secondaryName);
+    const secondaryAuth = getAuth(secondaryApp);
+
+    try {
+      // 1. Thêm vào Auth
+      const cred = await createUserWithEmailAndPassword(secondaryAuth, email, password);
+      const uid = cred.user.uid;
+
+      // 2. Thêm vào DB
+      await set(ref(db, `users/${uid}`), {
+        uid,
+        email,
+        displayName: displayName || email.split('@')[0],
+        role,
+        createdAt: Date.now(),
+        disabled: false
+      });
+
+      // Đăng xuất phiên secondary
+      await signOut(secondaryAuth);
+
+      showStatus('addStatus', `✓ Đã thêm ${email} vào cả Auth và DB`, 'success');
+      // Clear form
+      document.getElementById('newEmail').value = '';
+      document.getElementById('newPassword').value = '';
+      document.getElementById('newDisplayName').value = '';
+      document.getElementById('newRole').value = 'user';
+    } catch (err) {
+      console.error(err);
+      showStatus('addStatus', 'Lỗi: ' + (err.message || err.code), 'error');
+    } finally {
+      await deleteApp(secondaryApp).catch(() => {});
+      btn.disabled = false;
+    }
+  });
+
+  // ===== Edit user =====
+  function openEditModal(u) {
+    document.getElementById('editUid').value = u.uid;
+    document.getElementById('editEmail').value = u.email;
+    document.getElementById('editDisplayName').value = u.displayName || '';
+    document.getElementById('editRole').value = u.role || 'user';
+    document.getElementById('editDisabled').value = u.disabled ? 'true' : 'false';
+    clearStatus('editStatus');
+    document.getElementById('editModal').hidden = false;
+  }
+  document.getElementById('btnEditCancel').addEventListener('click', () => {
+    document.getElementById('editModal').hidden = true;
+  });
+  document.getElementById('btnEditSave').addEventListener('click', async () => {
+    const uid = document.getElementById('editUid').value;
+    const updates = {
+      displayName: document.getElementById('editDisplayName').value.trim(),
+      role: document.getElementById('editRole').value,
+      disabled: document.getElementById('editDisabled').value === 'true',
+      updatedAt: Date.now()
+    };
+    try {
+      await update(ref(db, `users/${uid}`), updates);
+      document.getElementById('editModal').hidden = true;
+    } catch (err) {
+      showStatus('editStatus', 'Lỗi: ' + err.message, 'error');
+    }
+  });
+
+  // ===== Delete user =====
+  async function deleteUser(u) {
+    if (u.uid === currentUser.uid) {
+      alert('Không thể xóa chính mình!');
+      return;
+    }
+    const ok = confirm(
+      `Xóa ${u.email}?\n\n` +
+      `⚠️ Lưu ý: Client-side chỉ xóa được trong Realtime DB. ` +
+      `Bản ghi trong Firebase Auth vẫn còn (cần Admin SDK server-side để xóa).\n\n` +
+      `Tuy nhiên: do hệ thống check 2 nơi khi login, user này sẽ KHÔNG đăng nhập được nữa ` +
+      `(vì DB không có bản ghi → bị đá ngay).`
+    );
+    if (!ok) return;
+    try {
+      await remove(ref(db, `users/${u.uid}`));
+    } catch (err) {
+      alert('Lỗi: ' + err.message);
+    }
+  }
+
+  // ===== Normal user view =====
+  function renderUserView() {
+    document.getElementById('userEmailLabel').textContent = currentUser.email;
+    document.getElementById('userDisplayName').textContent = currentUserData.displayName || currentUser.email;
+    document.getElementById('userInfo').innerHTML = `
+      <div>UID: <code>${escapeHtml(currentUser.uid)}</code></div>
+      <div>Vai trò: <code>${escapeHtml(currentUserData.role)}</code></div>
+      <div>Tạo lúc: ${new Date(currentUserData.createdAt || 0).toLocaleString('vi-VN')}</div>
+    `;
+    showView('userView');
+  }
+
+  // Enter key login
+  ['loginEmail', 'loginPassword'].forEach(id => {
+    document.getElementById(id).addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('btnLogin').click();
+    });
+  });
 </script>
 
-<!--
-=== FIREBASE RULES ===
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-
-    function isAdmin() { return request.auth != null && request.auth.token.email == 'Admin@myapp.com'; }
-    function isStaff() { return request.auth != null; }
-
-    match /config/{doc}    { allow read: if true;      allow write: if isAdmin(); }
-    match /staff/{doc}     { allow read: if isStaff(); allow write: if isAdmin(); }
-    match /vehicles/{doc}  { allow read: if isStaff(); allow write: if isAdmin(); }
-    match /trips/{doc}     { allow read, write: if true; }
-    match /{document=**}   { allow read, write: if false; }
-  }
-}
--->
 </body>
 </html>
